@@ -9,7 +9,7 @@ dependencies:
     - name: RISCV-Knowledge
       url: https://github.com/NotThatJonSmith/RISCV-Knowledge.git
       checkout: main
-      clump:
+      stella-yaml:
         public-header-paths:
           - include
 private-header-paths:
