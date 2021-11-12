@@ -8,7 +8,7 @@
 #include <Operands.hpp>
 #include <HartState.hpp>
 
-#pragma mark -- Common Base ISA Fields --
+// -- Common Base ISA Fields --
 
 #define RD          ExtendBits::Zero, 11, 7
 #define RS1         ExtendBits::Zero, 19, 15
@@ -19,7 +19,7 @@
 #define U_IMM       31, 12, 12
 #define J_IMM       31, 31, 19, 12, 20, 20, 30, 21, 1
 
-#pragma mark -- add --
+// -- add --
 
 inline Operands r_operands_from(__uint32_t inst) {
     Operands result;
@@ -53,7 +53,7 @@ constexpr CodePoint inst_add = {
     4
 };
 
-#pragma mark -- sub --
+// -- sub --
 
 template<typename XLEN_t>
 inline void ex_sub(Operands operands, HartState *state) {
@@ -79,7 +79,7 @@ constexpr CodePoint inst_sub = {
     4
 };
 
-#pragma mark -- sll --
+// -- sll --
 
 template<typename XLEN_t>
 inline void ex_sll(Operands operands, HartState *state) {
@@ -105,7 +105,7 @@ constexpr CodePoint inst_sll = {
     4
 };
 
-#pragma mark -- slt --
+// -- slt --
 
 template<typename XLEN_t>
 inline void ex_slt(Operands operands, HartState *state) {
@@ -134,7 +134,7 @@ constexpr CodePoint inst_slt = {
     4
 };
 
-#pragma mark -- sltu --
+// -- sltu --
 
 template<typename XLEN_t>
 inline void ex_sltu(Operands operands, HartState *state) {
@@ -160,7 +160,7 @@ constexpr CodePoint inst_sltu = {
     4
 };
 
-#pragma mark -- xor --
+// -- xor --
 
 template<typename XLEN_t>
 inline void ex_xor(Operands operands, HartState *state) {
@@ -186,7 +186,7 @@ constexpr CodePoint inst_xor = {
     4
 };
 
-#pragma mark -- sra --
+// -- sra --
 
 template<typename XLEN_t>
 inline void ex_sra(Operands operands, HartState *state) {
@@ -216,7 +216,7 @@ constexpr CodePoint inst_sra = {
     4
 };
 
-#pragma mark -- srl --
+// -- srl --
 
 template<typename XLEN_t>
 inline void ex_srl(Operands operands, HartState *state) {
@@ -242,7 +242,7 @@ constexpr CodePoint inst_srl = {
     4
 };
 
-#pragma mark -- or --
+// -- or --
 
 template<typename XLEN_t>
 inline void ex_or(Operands operands, HartState *state) {
@@ -268,7 +268,7 @@ constexpr CodePoint inst_or = {
     4
 };
 
-#pragma mark -- and --
+// -- and --
 
 template<typename XLEN_t>
 inline void ex_and(Operands operands, HartState *state) {
@@ -294,7 +294,7 @@ constexpr CodePoint inst_and = {
     4
 };
 
-#pragma mark -- addi --
+// -- addi --
 
 inline Operands i_operands_from(__uint32_t inst) {
     Operands result;
@@ -329,7 +329,7 @@ constexpr CodePoint inst_addi = {
     4
 };
 
-#pragma mark -- slli --
+// -- slli --
 
 inline Operands i_shift_operands_from(__uint32_t inst) {
     Operands result;
@@ -362,7 +362,7 @@ constexpr CodePoint inst_slli = {
     4
 };
 
-#pragma mark -- srli --
+// -- srli --
 
 template<typename XLEN_t>
 inline void ex_srli(Operands operands, HartState *state) {
@@ -387,7 +387,7 @@ constexpr CodePoint inst_srli = {
     4
 };
 
-#pragma mark -- srai --
+// -- srai --
 
 template<typename XLEN_t>
 inline void ex_srai(Operands operands, HartState *state) {
@@ -416,7 +416,7 @@ constexpr CodePoint inst_srai = {
     4
 };
 
-#pragma mark -- slti --
+// -- slti --
 
 template<typename XLEN_t>
 inline void ex_slti(Operands operands, HartState *state) {
@@ -444,7 +444,7 @@ constexpr CodePoint inst_slti = {
     4
 };
 
-#pragma mark -- sltiu --
+// -- sltiu --
 
 template<typename XLEN_t>
 inline void ex_sltiu(Operands operands, HartState *state) {
@@ -470,7 +470,7 @@ constexpr CodePoint inst_sltiu = {
     4
 };
 
-#pragma mark -- xori --
+// -- xori --
 
 template<typename XLEN_t>
 inline void ex_xori(Operands operands, HartState *state) {
@@ -498,7 +498,7 @@ constexpr CodePoint inst_xori = {
     4
 };
 
-#pragma mark -- ori --
+// -- ori --
 
 template<typename XLEN_t>
 inline void ex_ori(Operands operands, HartState *state) {
@@ -526,7 +526,7 @@ constexpr CodePoint inst_ori = {
     4
 };
 
-#pragma mark -- andi --
+// -- andi --
 
 template<typename XLEN_t>
 inline void ex_andi(Operands operands, HartState *state) {
@@ -554,7 +554,7 @@ constexpr CodePoint inst_andi = {
     4
 };
 
-#pragma mark -- lui --
+// -- lui --
 
 inline Operands u_operands_from(__uint32_t inst) {
     Operands result;
@@ -585,7 +585,7 @@ constexpr CodePoint inst_lui = {
     4
 };
 
-#pragma mark -- auipc --
+// -- auipc --
 
 template<typename XLEN_t>
 inline void ex_auipc(Operands operands, HartState *state) {
@@ -610,7 +610,7 @@ constexpr CodePoint inst_auipc = {
     4
 };
 
-#pragma mark -- jal --
+// -- jal --
 
 inline Operands j_operands_from(__uint32_t inst) {
     Operands result;
@@ -643,7 +643,7 @@ constexpr CodePoint inst_jal = {
     4
 };
 
-#pragma mark -- jalr --
+// -- jalr --
 
 template<typename XLEN_t>
 inline void ex_jalr(Operands operands, HartState *state) {
@@ -673,7 +673,7 @@ constexpr CodePoint inst_jalr = {
     4
 };
 
-#pragma mark -- beq --
+// -- beq --
 
 inline Operands b_operands_from(__uint32_t inst) {
     Operands result;
@@ -711,7 +711,7 @@ constexpr CodePoint inst_beq = {
     4
 };
 
-#pragma mark -- bne --
+// -- bne --
 
 template<typename XLEN_t>
 inline void ex_bne(Operands operands, HartState *state) {
@@ -741,7 +741,7 @@ constexpr CodePoint inst_bne = {
     4
 };
 
-#pragma mark -- blt --
+// -- blt --
 
 template<typename XLEN_t>
 inline void ex_blt(Operands operands, HartState *state) {
@@ -773,7 +773,7 @@ constexpr CodePoint inst_blt = {
     4
 };
 
-#pragma mark -- bge --
+// -- bge --
 
 template<typename XLEN_t>
 inline void ex_bge(Operands operands, HartState *state) {
@@ -805,7 +805,7 @@ constexpr CodePoint inst_bge = {
     4
 };
 
-#pragma mark -- bltu --
+// -- bltu --
 
 template<typename XLEN_t>
 inline void ex_bltu(Operands operands, HartState *state) {
@@ -835,7 +835,7 @@ constexpr CodePoint inst_bltu = {
     4
 };
 
-#pragma mark -- bgeu --
+// -- bgeu --
 
 template<typename XLEN_t>
 inline void ex_bgeu(Operands operands, HartState *state) {
@@ -865,7 +865,7 @@ constexpr CodePoint inst_bgeu = {
     4
 };
 
-#pragma mark -- lb --
+// -- lb --
 
 template<typename XLEN_t>
 inline void ex_lb(Operands operands, HartState *state) {
@@ -899,7 +899,7 @@ constexpr CodePoint inst_lb = {
     4
 };
 
-#pragma mark -- lh --
+// -- lh --
 
 template<typename XLEN_t>
 inline void ex_lh(Operands operands, HartState *state) {
@@ -933,7 +933,7 @@ constexpr CodePoint inst_lh = {
     4
 };
 
-#pragma mark -- lw --
+// -- lw --
 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 template<typename XLEN_t>
@@ -967,7 +967,7 @@ constexpr CodePoint inst_lw = {
     4
 };
 
-#pragma mark -- lbu --
+// -- lbu --
 
 template<typename XLEN_t>
 inline void ex_lbu(Operands operands, HartState *state) {
@@ -1002,7 +1002,7 @@ constexpr CodePoint inst_lbu = {
     4
 };
 
-#pragma mark -- lhu --
+// -- lhu --
 
 template<typename XLEN_t>
 inline void ex_lhu(Operands operands, HartState *state) {
@@ -1038,7 +1038,7 @@ constexpr CodePoint inst_lhu = {
     4
 };
 
-#pragma mark -- sb --
+// -- sb --
 
 inline Operands s_operands_from(__uint32_t inst) {
     Operands result;
@@ -1076,7 +1076,7 @@ constexpr CodePoint inst_sb = {
     4
 };
 
-#pragma mark -- sh --
+// -- sh --
 
 template<typename XLEN_t>
 inline void ex_sh(Operands operands, HartState *state) {
@@ -1106,7 +1106,7 @@ constexpr CodePoint inst_sh = {
     4
 };
 
-#pragma mark -- sw --
+// -- sw --
 
 template<typename XLEN_t>
 inline void ex_sw(Operands operands, HartState *state) {
@@ -1136,7 +1136,7 @@ constexpr CodePoint inst_sw = {
     4
 };
 
-#pragma mark -- fence --
+// -- fence --
 
 template<typename XLEN_t>
 inline void ex_fence(Operands operands, HartState *state) {
@@ -1157,7 +1157,7 @@ constexpr CodePoint inst_fence = {
     4
 };
 
-#pragma mark -- fencei --
+// -- fencei --
 
 inline Operands no_operands_from(__uint32_t inst) {
     Operands result;
@@ -1183,7 +1183,7 @@ constexpr CodePoint inst_fencei = {
     4
 };
 
-#pragma mark -- ecall --
+// -- ecall --
 
 template<typename XLEN_t>
 inline void ex_ecall(Operands operands, HartState *state) {
@@ -1208,7 +1208,7 @@ constexpr CodePoint inst_ecall = {
     4
 };
 
-#pragma mark -- ebreak --
+// -- ebreak --
 
 template<typename XLEN_t>
 inline void ex_ebreak(Operands operands, HartState *state) {
@@ -1229,7 +1229,7 @@ constexpr CodePoint inst_ebreak = {
     4
 };
 
-#pragma mark -- csrrw --
+// -- csrrw --
 
 inline Operands csr_operands_from(__uint32_t inst) {
     Operands result;
@@ -1273,7 +1273,7 @@ constexpr CodePoint inst_csrrw = {
     4
 };
 
-#pragma mark -- csrrs --
+// -- csrrs --
 
 template<typename XLEN_t>
 inline void ex_csrrs(Operands operands, HartState *state) {
@@ -1308,7 +1308,7 @@ constexpr CodePoint inst_csrrs = {
     4
 };
 
-#pragma mark -- csrrc --
+// -- csrrc --
 
 template<typename XLEN_t>
 inline void ex_csrrc(Operands operands, HartState *state) {
@@ -1343,7 +1343,7 @@ constexpr CodePoint inst_csrrc = {
     4
 };
 
-#pragma mark -- csrrwi --
+// -- csrrwi --
 
 template<typename XLEN_t>
 inline void ex_csrrwi(Operands operands, HartState *state) {
@@ -1378,7 +1378,7 @@ constexpr CodePoint inst_csrrwi = {
     4
 };
 
-#pragma mark -- csrrsi --
+// -- csrrsi --
 
 template<typename XLEN_t>
 inline void ex_csrrsi(Operands operands, HartState *state) {
@@ -1411,7 +1411,7 @@ constexpr CodePoint inst_csrrsi = {
     4
 };
 
-#pragma mark -- csrrci --
+// -- csrrci --
 
 template<typename XLEN_t>
 inline void ex_csrrci(Operands operands, HartState *state) {
@@ -1444,7 +1444,7 @@ constexpr CodePoint inst_csrrci = {
     4
 };
 
-#pragma mark -- illegal instruction --
+// -- illegal instruction --
 
 template<typename XLEN_t>
 inline void ex_illegal(Operands operands, HartState *state) {
@@ -1465,7 +1465,7 @@ constexpr CodePoint illegal4ByteInstruction = {
     4
 };
 
-#pragma mark -- reserved instruction --
+// -- reserved instruction --
 
 constexpr CodePoint reserved4ByteInstruction = {
     no_operands_from,
@@ -1476,7 +1476,7 @@ constexpr CodePoint reserved4ByteInstruction = {
     4
 };
 
-#pragma mark -- unimplemented instruction --
+// -- unimplemented instruction --
 
 template<typename XLEN_t>
 inline void ex_unimplemented(Operands operands, HartState *state) {

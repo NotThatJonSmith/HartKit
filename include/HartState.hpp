@@ -22,7 +22,7 @@ public:
     HartState();
     void Reset(HartSpec* spec);
 
-    #pragma mark -- Change Notification Callbacks --
+    // -- Change Notification Callbacks --
 
     std::function<void(void)> notifySoftwareChangedSATP;
     std::function<void(void)> notifySoftwareChangedMSTATUS;
@@ -32,7 +32,7 @@ public:
     std::function<void(void)> notifyVMFenceRequested;
     static void emptyNotifyHandler();
 
-    #pragma mark -- Operating State --
+    // -- Operating State --
 
     struct Fetch {
         __uint32_t encoding;
@@ -48,12 +48,12 @@ public:
 
     MMU* mmu;
 
-    #pragma mark -- MISA Fields --
+    // -- MISA Fields --
 
     RISCV::XlenMode mxlen;
     __uint32_t extensions;
 
-    #pragma mark -- MSTATUS Fields --
+    // -- MSTATUS Fields --
 
     bool userInterruptsEnabled;
     bool supervisorInterruptsEnabled;
@@ -75,13 +75,13 @@ public:
     RISCV::XlenMode uxlen;
     bool stateDirty;
 
-    #pragma mark -- SATP Fields --
+    // -- SATP Fields --
 
     RISCV::PagingMode pagingMode;
     Register ppn;
     Register asid;
 
-    #pragma mark -- Memory --
+    // -- Memory --
 
     /*
      * Transact against the attached MMU object. Raise an exception if
@@ -102,7 +102,7 @@ public:
         return size == transactionResult.transferredSize;
     }
 
-    #pragma mark -- Queries --
+    // -- Queries --
 
     RISCV::XlenMode GetXLEN();
 
@@ -225,7 +225,7 @@ public:
         notifySoftwareChangedMSTATUS();
     }
 
-    #pragma mark -- Mutations -- 
+    // -- Mutations -- 
 
     template<typename XLEN_t>
     inline void RaiseException(RISCV::TrapCause cause, XLEN_t tval) {

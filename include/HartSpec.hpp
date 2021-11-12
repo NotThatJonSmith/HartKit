@@ -21,11 +21,11 @@ public:
     Register resetVector;
     // TODO some bits hardwired to other bits in status regs...
 
-    #pragma mark -- Queries --
+    // -- Queries --
 
     RISCV::XlenMode WidestXlen(RISCV::PrivilegeMode privilege, RISCV::XlenMode targetXlen);
 
-    #pragma mark -- Muatations --
+    // -- Muatations --
 
     void SetPrivWidthSupport(RISCV::PrivilegeMode priv, RISCV::XlenMode xlen, bool enabled);
     void SetWidthSupport(RISCV::XlenMode xlen, bool enabled);

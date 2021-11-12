@@ -2,7 +2,7 @@
 
 #include <instructions/BaseISA.hpp>
 
-#pragma mark -- Common Compressed ISA Fields --
+// -- Common Compressed ISA Fields --
 
 #define C_FUNCT2    ExtendBits::Zero, 6, 5
 #define C_FUNCT3    ExtendBits::Zero, 15, 13
@@ -41,7 +41,7 @@ inline Operands operands_cimmop(__uint32_t inst) {
     return result;
 }
 
-#pragma mark -- caddi4spn --
+// -- caddi4spn --
 
 inline Operands operands_caddi4spn(__uint32_t inst) {
     Operands result;
@@ -65,7 +65,7 @@ constexpr CodePoint inst_caddi4spn = {
     2
 };
 
-#pragma mark -- clw --
+// -- clw --
 
 inline Operands operands_clw(__uint32_t inst) {
     Operands result;
@@ -90,7 +90,7 @@ constexpr CodePoint inst_clw = {
     2
 };
 
-#pragma mark -- csw --
+// -- csw --
 
 inline Operands operands_csw(__uint32_t inst) {
     Operands result;
@@ -114,7 +114,7 @@ constexpr CodePoint inst_csw = {
     2
 };
 
-#pragma mark -- caddi --
+// -- caddi --
 
 inline Operands operands_caddi(__uint32_t inst) {
     Operands result;
@@ -138,7 +138,7 @@ constexpr CodePoint inst_caddi = {
     2
 };
 
-#pragma mark -- cjal --
+// -- cjal --
 
 inline Operands operands_cjal(__uint32_t inst) {
     Operands result;
@@ -161,7 +161,7 @@ constexpr CodePoint inst_cjal = {
     2
 };
 
-#pragma mark -- cli --
+// -- cli --
 
 inline Operands operands_cli(__uint32_t inst) {
     Operands result;
@@ -185,7 +185,7 @@ constexpr CodePoint inst_cli = {
     2
 };
 
-#pragma mark -- clui --
+// -- clui --
 
 inline Operands operands_clui(__uint32_t inst) {
     Operands result;
@@ -208,7 +208,7 @@ constexpr CodePoint inst_clui = {
     2
 };
 
-#pragma mark -- caddi16sp --
+// -- caddi16sp --
 
 inline Operands operands_caddi16sp(__uint32_t inst) {
     Operands result;
@@ -232,7 +232,7 @@ constexpr CodePoint inst_caddi16sp = {
     2
 };
 
-#pragma mark -- csub --
+// -- csub --
 
 inline void print_csub(Operands operands, std::ostream *out) {
     *out << "(C.SUB) ";
@@ -248,7 +248,7 @@ constexpr CodePoint inst_csub = {
     2
 };
 
-#pragma mark -- cxor --
+// -- cxor --
 
 inline void print_cxor(Operands operands, std::ostream *out) {
     *out << "(C.XOR) ";
@@ -264,7 +264,7 @@ constexpr CodePoint inst_cxor = {
     2
 };
 
-#pragma mark -- cor --
+// -- cor --
 
 inline void print_cor(Operands operands, std::ostream *out) {
     *out << "(C.OR) ";
@@ -280,7 +280,7 @@ constexpr CodePoint inst_cor = {
     2
 };
 
-#pragma mark -- cand --
+// -- cand --
 
 inline void print_cand(Operands operands, std::ostream *out) {
     *out << "(C.AND) ";
@@ -296,7 +296,7 @@ constexpr CodePoint inst_cand = {
     2
 };
 
-#pragma mark -- cj --
+// -- cj --
 
 inline Operands operands_cj(__uint32_t inst) {
     Operands result;
@@ -319,7 +319,7 @@ constexpr CodePoint inst_cj = {
     2
 };
 
-#pragma mark -- cbeqz --
+// -- cbeqz --
 
 inline Operands operands_cbeqz(__uint32_t inst) {
     Operands result;
@@ -343,7 +343,7 @@ constexpr CodePoint inst_cbeqz = {
     2
 };
 
-#pragma mark -- cbnez --
+// -- cbnez --
 
 inline Operands operands_cbnez(__uint32_t inst) {
     Operands result;
@@ -367,7 +367,7 @@ constexpr CodePoint inst_cbnez = {
     2
 };
 
-#pragma mark -- candi --
+// -- candi --
 
 inline Operands operands_candi(__uint32_t inst) {
     Operands result;
@@ -391,7 +391,7 @@ constexpr CodePoint inst_candi = {
     2
 };
 
-#pragma mark -- cslli --
+// -- cslli --
 
 inline Operands operands_cslli(__uint32_t inst) {
     Operands result;
@@ -434,7 +434,7 @@ constexpr CodePoint inst_cslli_128 = {
     2
 };
 
-#pragma mark -- clwsp --
+// -- clwsp --
 
 inline Operands operands_clwsp(__uint32_t inst) {
     Operands result;
@@ -458,7 +458,7 @@ constexpr CodePoint inst_clwsp = {
     2
 };
 
-#pragma mark -- cswsp --
+// -- cswsp --
 
 inline Operands operands_cswsp(__uint32_t inst) {
     Operands result;
@@ -482,7 +482,7 @@ constexpr CodePoint inst_cswsp = {
     2
 };
 
-#pragma mark -- cjalr --
+// -- cjalr --
 
 inline Operands operands_cjalr(__uint32_t inst) {
     Operands result;
@@ -506,7 +506,7 @@ constexpr CodePoint inst_cjalr = {
     2
 };
 
-#pragma mark -- cadd --
+// -- cadd --
 
 inline Operands operands_cadd(__uint32_t inst) {
     Operands result;
@@ -530,7 +530,7 @@ constexpr CodePoint inst_cadd = {
     2
 };
 
-#pragma mark -- cjr --
+// -- cjr --
 
 inline Operands operands_cjr(__uint32_t inst) {
     Operands result;
@@ -554,7 +554,7 @@ constexpr CodePoint inst_cjr = {
     2
 };
 
-#pragma mark -- cmv --
+// -- cmv --
 
 inline Operands operands_cmv(__uint32_t inst) {
     Operands result;
@@ -578,7 +578,7 @@ constexpr CodePoint inst_cmv = {
     2
 };
 
-#pragma mark -- cebreak --
+// -- cebreak --
 
 inline void print_cebreak(Operands operands, std::ostream *out) {
     *out << "(C.EBREAK) ";
@@ -594,7 +594,7 @@ constexpr CodePoint inst_cebreak = {
     2
 };
 
-#pragma mark -- csrli --
+// -- csrli --
 
 inline Operands operands_csrli_csrai_32_64(__uint32_t inst) {
     Operands result;
@@ -618,7 +618,7 @@ constexpr CodePoint inst_csrli = {
     2
 };
 
-#pragma mark -- csrli_128 --
+// -- csrli_128 --
 
 inline Operands operands_csrli_csrai_128(__uint32_t inst) {
     Operands result;
@@ -639,7 +639,7 @@ constexpr CodePoint inst_csrli_128 = {
     2
 };
 
-#pragma mark -- csrai --
+// -- csrai --
 
 inline void print_csrai(Operands operands, std::ostream *out) {
     *out << "(C.SRAI) ";
@@ -655,7 +655,7 @@ constexpr CodePoint inst_csrai = {
     2
 };
 
-#pragma mark -- csrai_128 --
+// -- csrai_128 --
 
 constexpr CodePoint inst_csrai_128 = {
     operands_csrli_csrai_128,
@@ -666,7 +666,7 @@ constexpr CodePoint inst_csrai_128 = {
     2
 };
 
-#pragma mark -- illegal compressed instruction --
+// -- illegal compressed instruction --
 
 constexpr CodePoint illegal2ByteInstruction = {
     no_operands_from,
@@ -677,7 +677,7 @@ constexpr CodePoint illegal2ByteInstruction = {
     2
 };
 
-#pragma mark -- reserved compressed instruction --
+// -- reserved compressed instruction --
 
 constexpr CodePoint reserved2ByteInstruction = {
     no_operands_from,
@@ -688,7 +688,7 @@ constexpr CodePoint reserved2ByteInstruction = {
     2
 };
 
-#pragma mark -- unimplemented compressed instruction --
+// -- unimplemented compressed instruction --
 
 constexpr CodePoint unimplemented2ByteInstruction = {
     no_operands_from,

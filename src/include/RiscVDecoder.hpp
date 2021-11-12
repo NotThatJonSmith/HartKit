@@ -15,7 +15,7 @@
 #include <instructions/ExtensionM.hpp>
 #include <instructions/PrivilegedISA.hpp>
 
-#pragma mark -- Common Decoder Fields --
+// -- Common Decoder Fields --
 
 #define QUADRANT    ExtendBits::Zero, 1, 0
 #define OPCODE      ExtendBits::Zero, 6, 2

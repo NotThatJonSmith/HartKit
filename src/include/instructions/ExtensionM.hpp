@@ -5,7 +5,7 @@
 #include <CodePoint.hpp>
 #include <Operands.hpp>
 
-#pragma mark -- mul --
+// -- mul --
 
 template<typename XLEN_t>
 inline void ex_mul(Operands operands, HartState *state) {
@@ -33,7 +33,7 @@ constexpr CodePoint inst_mul = {
     4
 };
 
-#pragma mark -- mulh --
+// -- mulh --
 
 template<typename XLEN_t>
 inline void ex_mulh(Operands operands, HartState *state) {
@@ -53,7 +53,7 @@ constexpr CodePoint inst_mulh = {
     4
 };
 
-#pragma mark -- mulhsu --
+// -- mulhsu --
 
 template<typename XLEN_t>
 inline void ex_mulhsu(Operands operands, HartState *state) {
@@ -73,7 +73,7 @@ constexpr CodePoint inst_mulhsu = {
     4
 };
 
-#pragma mark -- mulhu --
+// -- mulhu --
 
 template<typename XLEN_t>
 inline void ex_mulhu(Operands operands, HartState *state) {
@@ -93,7 +93,7 @@ constexpr CodePoint inst_mulhu = {
     4
 };
 
-#pragma mark -- div --
+// -- div --
 
 template<typename XLEN_t>
 inline void ex_div(Operands operands, HartState *state) {
@@ -120,7 +120,7 @@ constexpr CodePoint inst_div = {
     4
 };
 
-#pragma mark -- divu --
+// -- divu --
 
 template<typename XLEN_t>
 inline void ex_divu(Operands operands, HartState *state) {
@@ -146,7 +146,7 @@ constexpr CodePoint inst_divu = {
     4
 };
 
-#pragma mark -- rem --
+// -- rem --
 
 template<typename XLEN_t>
 inline void ex_rem(Operands operands, HartState *state) {
@@ -173,7 +173,7 @@ constexpr CodePoint inst_rem = {
     4
 };
 
-#pragma mark -- remu --
+// -- remu --
 
 template<typename XLEN_t>
 inline void ex_remu(Operands operands, HartState *state) {

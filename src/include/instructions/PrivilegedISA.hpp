@@ -5,7 +5,7 @@
 #include <CodePoint.hpp>
 #include <Operands.hpp>
 
-#pragma mark -- wfi --
+// -- wfi --
 
 template<typename XLEN_t>
 inline void ex_wfi(Operands operands, HartState *state) {
@@ -25,7 +25,7 @@ constexpr CodePoint inst_wfi = {
     4
 };
 
-#pragma mark -- uret --
+// -- uret --
 
 // TODO URET is only provided if user-mode traps are supported, and should raise an illegal instruction otherwise.
 template<typename XLEN_t>
@@ -50,7 +50,7 @@ constexpr CodePoint inst_uret = {
     4
 };
 
-#pragma mark -- sret --
+// -- sret --
 
 // TODO SRET must be provided if supervisor mode is supported, and should raise an
 // illegal instruction exception otherwise. SRET should also raise an illegal instruction exception when TSR=1
@@ -77,7 +77,7 @@ constexpr CodePoint inst_sret = {
     4
 };
 
-#pragma mark -- mret --
+// -- mret --
 
 template<typename XLEN_t>
 inline void ex_mret(Operands operands, HartState *state) {
@@ -101,7 +101,7 @@ constexpr CodePoint inst_mret = {
     4
 };
 
-#pragma mark -- sfencevma --
+// -- sfencevma --
 
 template<typename XLEN_t>
 inline void ex_sfencevma(Operands operands, HartState *state) {

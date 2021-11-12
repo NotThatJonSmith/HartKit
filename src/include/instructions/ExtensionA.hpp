@@ -5,7 +5,7 @@
 #include <CodePoint.hpp>
 #include <Operands.hpp>
 
-#pragma mark -- lrw --
+// -- lrw --
 
 template<typename XLEN_t>
 inline void ex_lrw(Operands operands, HartState *state) {
@@ -36,7 +36,7 @@ constexpr CodePoint inst_lrw = {
     4
 };
 
-#pragma mark -- lrd --
+// -- lrd --
 
 template<typename XLEN_t>
 inline void ex_lrd(Operands operands, HartState *state) {
@@ -57,7 +57,7 @@ constexpr CodePoint inst_lrd = {
     4
 };
 
-#pragma mark -- scw --
+// -- scw --
 
 template<typename XLEN_t>
 inline void ex_scw(Operands operands, HartState *state) {
@@ -87,7 +87,7 @@ constexpr CodePoint inst_scw = {
     4
 };
 
-#pragma mark -- scd --
+// -- scd --
 
 template<typename XLEN_t>
 inline void ex_scd(Operands operands, HartState *state) {
@@ -108,7 +108,7 @@ constexpr CodePoint inst_scd = {
     4
 };
 
-#pragma mark -- amoaddw --
+// -- amoaddw --
 
 template<typename XLEN_t>
 inline void ex_amoaddw(Operands operands, HartState *state) {
@@ -138,7 +138,7 @@ constexpr CodePoint inst_amoaddw = {
     4
 };
 
-#pragma mark -- amoaddd --
+// -- amoaddd --
 
 template<typename XLEN_t>
 inline void ex_amoaddd(Operands operands, HartState *state) {
@@ -159,7 +159,7 @@ constexpr CodePoint inst_amoaddd = {
     4
 };
 
-#pragma mark -- amoswapw --
+// -- amoswapw --
 
 template<typename XLEN_t>
 inline void ex_amoswapw(Operands operands, HartState *state) {
@@ -189,7 +189,7 @@ constexpr CodePoint inst_amoswapw = {
     4
 };
 
-#pragma mark -- amoswapd --
+// -- amoswapd --
 
 template<typename XLEN_t>
 inline void ex_amoswapd(Operands operands, HartState *state) {
@@ -210,7 +210,7 @@ constexpr CodePoint inst_amoswapd = {
     4
 };
 
-#pragma mark -- amoxorw --
+// -- amoxorw --
 
 template<typename XLEN_t>
 inline void ex_amoxorw(Operands operands, HartState *state) {
@@ -240,7 +240,7 @@ constexpr CodePoint inst_amoxorw = {
     4
 };
 
-#pragma mark -- amoxord --
+// -- amoxord --
 
 template<typename XLEN_t>
 inline void ex_amoxord(Operands operands, HartState *state) {
@@ -261,7 +261,7 @@ constexpr CodePoint inst_amoxord = {
     4
 };
 
-#pragma mark -- amoorw --
+// -- amoorw --
 
 template<typename XLEN_t>
 inline void ex_amoorw(Operands operands, HartState *state) {
@@ -291,7 +291,7 @@ constexpr CodePoint inst_amoorw = {
     4
 };
 
-#pragma mark -- amoord --
+// -- amoord --
 
 template<typename XLEN_t>
 inline void ex_amoord(Operands operands, HartState *state) {
@@ -312,7 +312,7 @@ constexpr CodePoint inst_amoord = {
     4
 };
 
-#pragma mark -- amoandw --
+// -- amoandw --
 
 template<typename XLEN_t>
 inline void ex_amoandw(Operands operands, HartState *state) {
@@ -342,7 +342,7 @@ constexpr CodePoint inst_amoandw = {
     4
 };
 
-#pragma mark -- amoandd --
+// -- amoandd --
 
 template<typename XLEN_t>
 inline void ex_amoandd(Operands operands, HartState *state) {
@@ -363,7 +363,7 @@ constexpr CodePoint inst_amoandd = {
     4
 };
 
-#pragma mark -- amominw --
+// -- amominw --
 
 template<typename XLEN_t>
 inline void ex_amominw(Operands operands, HartState *state) {
@@ -384,7 +384,7 @@ constexpr CodePoint inst_amominw = {
     4
 };
 
-#pragma mark -- amomind --
+// -- amomind --
 
 template<typename XLEN_t>
 inline void ex_amomind(Operands operands, HartState *state) {
@@ -405,7 +405,7 @@ constexpr CodePoint inst_amomind = {
     4
 };
 
-#pragma mark -- amomaxw --
+// -- amomaxw --
 
 template<typename XLEN_t>
 inline void ex_amomaxw(Operands operands, HartState *state) {
@@ -426,7 +426,7 @@ constexpr CodePoint inst_amomaxw = {
     4
 };
 
-#pragma mark -- amomaxd --
+// -- amomaxd --
 
 template<typename XLEN_t>
 inline void ex_amomaxd(Operands operands, HartState *state) {
@@ -447,7 +447,7 @@ constexpr CodePoint inst_amomaxd = {
     4
 };
 
-#pragma mark -- amominuw --
+// -- amominuw --
 
 template<typename XLEN_t>
 inline void ex_amominuw(Operands operands, HartState *state) {
@@ -468,7 +468,7 @@ constexpr CodePoint inst_amominuw = {
     4
 };
 
-#pragma mark -- amominud --
+// -- amominud --
 
 template<typename XLEN_t>
 inline void ex_amominud(Operands operands, HartState *state) {
@@ -489,7 +489,7 @@ constexpr CodePoint inst_amominud = {
     4
 };
 
-#pragma mark -- amomaxuw --
+// -- amomaxuw --
 
 template<typename XLEN_t>
 inline void ex_amomaxuw(Operands operands, HartState *state) {
@@ -510,7 +510,7 @@ constexpr CodePoint inst_amomaxuw = {
     4
 };
 
-#pragma mark -- amomaxud --
+// -- amomaxud --
 
 template<typename XLEN_t>
 inline void ex_amomaxud(Operands operands, HartState *state) {
