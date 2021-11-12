@@ -120,8 +120,7 @@ private:
 
             char* chunkBuf = buf + (chunkStartAddress - startAddress);
             XLEN_t translatedChunkStart = translation.translated + chunkStartAddress - translation.untranslated;
-            XLEN_t chunkSuccessSize =
-                ((CASK::IOTarget*)&transaction)->Transact<XLEN_t, accessType>(translatedChunkStart, chunkSize, chunkBuf);
+            XLEN_t chunkSuccessSize = transaction.BufferedIO(translatedChunkStart, chunkSize, chunkBuf);
             chunkStartAddress += chunkSize;
             
             if (chunkSuccessSize != chunkSize) {
