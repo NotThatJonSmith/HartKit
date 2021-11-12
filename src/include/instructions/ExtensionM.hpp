@@ -5,6 +5,8 @@
 #include <CodePoint.hpp>
 #include <Operands.hpp>
 
+#include <SignedXLEN.hpp>
+
 // -- mul --
 
 template<typename XLEN_t>
@@ -97,7 +99,7 @@ constexpr CodePoint inst_mulhu = {
 
 template<typename XLEN_t>
 inline void ex_div(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
     SXLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
     XLEN_t rd_value = rs2_value == 0 ? -1 : (XLEN_t)(rs1_value / rs2_value);
@@ -150,7 +152,7 @@ constexpr CodePoint inst_divu = {
 
 template<typename XLEN_t>
 inline void ex_rem(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
     SXLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : (rs1_value % rs2_value);

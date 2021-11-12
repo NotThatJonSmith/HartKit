@@ -8,6 +8,8 @@
 #include <Operands.hpp>
 #include <HartState.hpp>
 
+#include <SignedXLEN.hpp>
+
 // -- Common Base ISA Fields --
 
 #define RD          ExtendBits::Zero, 11, 7
@@ -109,7 +111,7 @@ constexpr CodePoint inst_sll = {
 
 template<typename XLEN_t>
 inline void ex_slt(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     XLEN_t unsigned_rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
@@ -306,7 +308,7 @@ inline Operands i_operands_from(__uint32_t inst) {
 
 template<typename XLEN_t>
 inline void ex_addi(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t rd_value = rs1_value + imm_value;
@@ -420,7 +422,7 @@ constexpr CodePoint inst_srai = {
 
 template<typename XLEN_t>
 inline void ex_slti(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     SXLEN_t imm_value = operands.I.imm.s;
@@ -474,7 +476,7 @@ constexpr CodePoint inst_sltiu = {
 
 template<typename XLEN_t>
 inline void ex_xori(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
@@ -502,7 +504,7 @@ constexpr CodePoint inst_xori = {
 
 template<typename XLEN_t>
 inline void ex_ori(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
@@ -530,7 +532,7 @@ constexpr CodePoint inst_ori = {
 
 template<typename XLEN_t>
 inline void ex_andi(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
@@ -647,7 +649,7 @@ constexpr CodePoint inst_jal = {
 
 template<typename XLEN_t>
 inline void ex_jalr(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rd_value = state->nextFetchVirtualPC->Read<XLEN_t>();
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -685,7 +687,7 @@ inline Operands b_operands_from(__uint32_t inst) {
 
 template<typename XLEN_t>
 inline void ex_beq(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
     SXLEN_t imm_value = operands.S.imm.s;
@@ -715,7 +717,7 @@ constexpr CodePoint inst_beq = {
 
 template<typename XLEN_t>
 inline void ex_bne(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
     SXLEN_t imm_value = operands.S.imm.s;
@@ -745,7 +747,7 @@ constexpr CodePoint inst_bne = {
 
 template<typename XLEN_t>
 inline void ex_blt(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
@@ -777,7 +779,7 @@ constexpr CodePoint inst_blt = {
 
 template<typename XLEN_t>
 inline void ex_bge(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
@@ -811,7 +813,7 @@ template<typename XLEN_t>
 inline void ex_bltu(Operands operands, HartState *state) {
     XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t imm_value = operands.S.imm.s;
     if (unsigned_rs1_value < unsigned_rs2_value) {
         XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
@@ -841,7 +843,7 @@ template<typename XLEN_t>
 inline void ex_bgeu(Operands operands, HartState *state) {
     XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t imm_value = operands.S.imm.s;
     if (unsigned_rs1_value >= unsigned_rs2_value) {
         XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
@@ -869,7 +871,7 @@ constexpr CodePoint inst_bgeu = {
 
 template<typename XLEN_t>
 inline void ex_lb(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint8_t word;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -903,7 +905,7 @@ constexpr CodePoint inst_lb = {
 
 template<typename XLEN_t>
 inline void ex_lh(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint16_t word;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -938,7 +940,7 @@ constexpr CodePoint inst_lh = {
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 template<typename XLEN_t>
 inline void ex_lw(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t word;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -971,7 +973,7 @@ constexpr CodePoint inst_lw = {
 
 template<typename XLEN_t>
 inline void ex_lbu(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint8_t word;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -1006,7 +1008,7 @@ constexpr CodePoint inst_lbu = {
 
 template<typename XLEN_t>
 inline void ex_lhu(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint16_t word;
     XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
     SXLEN_t imm_value = operands.I.imm.s;
@@ -1050,7 +1052,7 @@ inline Operands s_operands_from(__uint32_t inst) {
 
 template<typename XLEN_t>
 inline void ex_sb(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
     SXLEN_t imm_value = operands.S.imm.s;
@@ -1080,7 +1082,7 @@ constexpr CodePoint inst_sb = {
 
 template<typename XLEN_t>
 inline void ex_sh(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
     SXLEN_t imm_value = operands.S.imm.s;
@@ -1110,7 +1112,7 @@ constexpr CodePoint inst_sh = {
 
 template<typename XLEN_t>
 inline void ex_sw(Operands operands, HartState *state) {
-    typedef typename std::make_signed<XLEN_t>::type SXLEN_t;
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
     XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
     SXLEN_t imm_value = operands.S.imm.s;
