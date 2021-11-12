@@ -436,7 +436,7 @@ constexpr Instruction decode_full(__uint32_t inst, __uint32_t extensionsVector, 
         break;
     case RISCV::XlenMode::None:
         break;
-    }
     default: return illegal4ByteInstruction;
+    }
     return exact;
 }
