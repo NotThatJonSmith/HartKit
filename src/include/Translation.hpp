@@ -17,9 +17,7 @@ inline Translation<XLEN_t> PageFault(XLEN_t virt_addr) {
         return { virt_addr, 0, 0, RISCV::TrapCause::LOAD_PAGE_FAULT };
     } else if constexpr (accessType == CASK::AccessType::W) {
         return { virt_addr, 0, 0, RISCV::TrapCause::STORE_AMO_PAGE_FAULT };
-    } else if constexpr (accessType == CASK::AccessType::X) {
-        return { virt_addr, 0, 0, RISCV::TrapCause::INSTRUCTION_PAGE_FAULT };
     } else {
-        throw 0; // impossible
+        return { virt_addr, 0, 0, RISCV::TrapCause::INSTRUCTION_PAGE_FAULT };
     }
 }

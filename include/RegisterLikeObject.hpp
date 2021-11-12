@@ -17,9 +17,9 @@ public:
             return Get32();
         } else if constexpr (std::is_same<XLEN_t, __uint64_t>()) {
             return Get64();
-        } else if constexpr (std::is_same<XLEN_t, __uint128_t>()) {
+        } else {
             return Get128();
-        } else throw 0;
+        }
     }
 
     // Write the raw value without triggering side-effects
@@ -32,9 +32,9 @@ public:
             Set32(value);
         } else if constexpr (std::is_same<XLEN_t, __uint64_t>()) {
             Set64(value);
-        } else if constexpr (std::is_same<XLEN_t, __uint128_t>()) {
+        } else {
             Set128(value);
-        } else throw 0;
+        }
     }
 
     // Read the raw value, and trigger any read side-effects
@@ -47,9 +47,9 @@ public:
             return Read32();
         } else if constexpr (std::is_same<XLEN_t, __uint64_t>()) {
             return Read64();
-        } else if constexpr (std::is_same<XLEN_t, __uint128_t>()) {
+        } else {
             return Read128();
-        } else throw 0;
+        }
     }
 
     // Write the raw value, and trigger any write side-effects
@@ -62,9 +62,9 @@ public:
             Write32(value);
         } else if constexpr (std::is_same<XLEN_t, __uint64_t>()) {
             Write64(value);
-        } else if constexpr (std::is_same<XLEN_t, __uint128_t>()) {
+        } else {
             Write128(value);
-        } else throw 0;
+        }
     }
 
     virtual void CommitWriteSideEffects();
