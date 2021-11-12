@@ -221,6 +221,7 @@ constexpr CodePoint decode_system(__uint32_t inst, __uint32_t extensionsVector, 
             case RISCV::SubSubMinorOpcode::ECALL: return inst_ecall;
             case RISCV::SubSubMinorOpcode::EBREAK: return inst_ebreak;
             case RISCV::SubSubMinorOpcode::URET: return inst_uret;
+            default: return illegal4ByteInstruction;
             }
         case RISCV::SubMinorOpcode::SRET_WFI:
             switch (swizzle<__uint32_t, RS2>(inst)) {
@@ -324,7 +325,9 @@ constexpr CodePoint decode_compressed_q1(__uint32_t inst, __uint32_t extensionsV
             case 5: return unimplemented2ByteInstruction; // C.ADDW TODO
             case 6: return reserved2ByteInstruction;
             case 7: return reserved2ByteInstruction;
+            default: return illegal4ByteInstruction;
             }
+        default: return illegal4ByteInstruction;
         }
     case 5: return inst_cj;
     case 6: return inst_cbeqz;
@@ -434,5 +437,6 @@ constexpr Instruction decode_full(__uint32_t inst, __uint32_t extensionsVector, 
     case RISCV::XlenMode::None:
         break;
     }
+    default: return illegal4ByteInstruction;
     return exact;
 }

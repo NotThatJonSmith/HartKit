@@ -124,21 +124,19 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     // succeed. MXR has no effect when page-based virtual memory is not in
     // effect.
 
-    if constexpr (accessType == CASK::AccessType::R) {
+    if (accessType == CASK::AccessType::R) {
         if (!(pte & RISCV::PTEBit::R) &&
             !((pte & RISCV::PTEBit::X) && mxrBit)) {
             return PageFault<XLEN_t, accessType>(virt_addr);
         }
-    } else if constexpr (accessType == CASK::AccessType::W) {
+    } else if (accessType == CASK::AccessType::W) {
         if (!(pte & RISCV::PTEBit::W)) {
             return PageFault<XLEN_t, accessType>(virt_addr);
         }
-    } else if constexpr (accessType == CASK::AccessType::X) {
+    } else {
         if (!(pte & RISCV::PTEBit::X)) {
             return PageFault<XLEN_t, accessType>(virt_addr);
         }
-    } else {
-        // TODO bogus!
     }
     
     // The U bit indicates whether the page is accessible to user mode.
