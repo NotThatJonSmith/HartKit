@@ -1162,8 +1162,7 @@ constexpr CodePoint inst_fence = {
 // -- fencei --
 
 inline Operands no_operands_from(__uint32_t inst) {
-    Operands result;
-    return result;
+    return { { } };
 }
 
 template<typename XLEN_t>
