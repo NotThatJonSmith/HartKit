@@ -3,7 +3,7 @@ apps: []
 build-static-lib: true
 build-shared-lib: true
 dependencies:
-    - name: CASK-Devices
+    - name: CASK
       url: https://github.com/NotThatJonSmith/CASK.git
       checkout: main
     - name: RISCV-Knowledge
