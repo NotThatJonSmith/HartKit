@@ -43,4 +43,10 @@ public:
         return sizeSum;
     }
 
+    void Clear() {
+        while (!transactionQueue.empty()) {
+            transactionQueue.pop();
+        }
+    }
+
 };

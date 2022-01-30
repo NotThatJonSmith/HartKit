@@ -103,8 +103,7 @@ private:
         XLEN_t chunkStartAddress = startAddress;
         while (chunkStartAddress <= endAddress) {
             
-            Translation<XLEN_t> translation =
-                translator->Translate<XLEN_t, accessType>(chunkStartAddress);
+            Translation<XLEN_t> translation = translator->Translate<XLEN_t, accessType>(chunkStartAddress);
             
             XLEN_t chunkEndAddress = translation.validThrough;
             if (chunkEndAddress > endAddress) {
@@ -112,9 +111,9 @@ private:
             }
             XLEN_t chunkSize = chunkEndAddress - chunkStartAddress + 1;
 
-
             result.trapCause = translation.generatedTrap;
             if (result.trapCause != RISCV::TrapCause::NONE) {
+                transaction.Clear(); // TODO is clear even needed?
                 return result;
             }
 
@@ -124,6 +123,7 @@ private:
             chunkStartAddress += chunkSize;
             
             if (chunkSuccessSize != chunkSize) {
+                transaction.Clear();
                 return result;
             }
 
