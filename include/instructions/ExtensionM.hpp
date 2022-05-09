@@ -3,18 +3,17 @@
 #include <RiscV.hpp>
 
 #include <CodePoint.hpp>
-#include <Operands.hpp>
 
 #include <SignedXLEN.hpp>
 
 // -- mul --
 
 template<typename XLEN_t>
-inline void ex_mul(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_mul(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value * rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
     // TODO - RD should take the lower MXLEN bits of the result. Does it?
     // TODO - signed/unsigned multiply?
 }
@@ -38,7 +37,7 @@ constexpr CodePoint inst_mul = {
 // -- mulh --
 
 template<typename XLEN_t>
-inline void ex_mulh(Operands operands, HartState *state) {
+inline void ex_mulh(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO - implement mulh
 }
 
@@ -58,7 +57,7 @@ constexpr CodePoint inst_mulh = {
 // -- mulhsu --
 
 template<typename XLEN_t>
-inline void ex_mulhsu(Operands operands, HartState *state) {
+inline void ex_mulhsu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO - implement mulhsu
 }
 
@@ -78,7 +77,7 @@ constexpr CodePoint inst_mulhsu = {
 // -- mulhu --
 
 template<typename XLEN_t>
-inline void ex_mulhu(Operands operands, HartState *state) {
+inline void ex_mulhu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO - implement mulhu
 }
 
@@ -98,12 +97,12 @@ constexpr CodePoint inst_mulhu = {
 // -- div --
 
 template<typename XLEN_t>
-inline void ex_div(Operands operands, HartState *state) {
+inline void ex_div(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    SXLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    SXLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+    SXLEN_t rs1_value = state->regs[operands.R.rs1];
+    SXLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs2_value == 0 ? -1 : (XLEN_t)(rs1_value / rs2_value);
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_div(Operands operands, std::ostream *out) {
@@ -125,11 +124,11 @@ constexpr CodePoint inst_div = {
 // -- divu --
 
 template<typename XLEN_t>
-inline void ex_divu(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_divu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs2_value == 0 ? ~(XLEN_t)0 : (rs1_value / rs2_value);
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_divu(Operands operands, std::ostream *out) {
@@ -151,12 +150,12 @@ constexpr CodePoint inst_divu = {
 // -- rem --
 
 template<typename XLEN_t>
-inline void ex_rem(Operands operands, HartState *state) {
+inline void ex_rem(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    SXLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    SXLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+    SXLEN_t rs1_value = state->regs[operands.R.rs1];
+    SXLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : (rs1_value % rs2_value);
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_rem(Operands operands, std::ostream *out) {
@@ -178,11 +177,11 @@ constexpr CodePoint inst_rem = {
 // -- remu --
 
 template<typename XLEN_t>
-inline void ex_remu(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_remu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : rs1_value % rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_remu(Operands operands, std::ostream *out) {

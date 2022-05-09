@@ -3,12 +3,11 @@
 #include <RiscV.hpp>
 
 #include <CodePoint.hpp>
-#include <Operands.hpp>
 
 // -- wfi --
 
 template<typename XLEN_t>
-inline void ex_wfi(Operands operands, HartState *state) {
+inline void ex_wfi(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // NOP for now. TODO something smarter with the hart's interrupt pins
 }
 
@@ -29,12 +28,12 @@ constexpr CodePoint inst_wfi = {
 
 // TODO URET is only provided if user-mode traps are supported, and should raise an illegal instruction otherwise.
 template<typename XLEN_t>
-inline void ex_uret(Operands operands, HartState *state) {
+inline void ex_uret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (state->privilegeMode < RISCV::PrivilegeMode::User) {
-        state->RaiseException<XLEN_t>(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
+        state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<XLEN_t, RISCV::PrivilegeMode::User>();
+    state->ReturnFromTrap<RISCV::PrivilegeMode::User>();
 }
 
 inline void print_uret(Operands operands, std::ostream *out) {
@@ -56,12 +55,12 @@ constexpr CodePoint inst_uret = {
 // illegal instruction exception otherwise. SRET should also raise an illegal instruction exception when TSR=1
 // in mstatus, as described in Section 3.1.6.4. 
 template<typename XLEN_t>
-inline void ex_sret(Operands operands, HartState *state) {
+inline void ex_sret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (state->privilegeMode < RISCV::PrivilegeMode::Supervisor) {
-        state->RaiseException<XLEN_t>(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
+        state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<XLEN_t, RISCV::PrivilegeMode::Supervisor>();
+    state->ReturnFromTrap<RISCV::PrivilegeMode::Supervisor>();
 }
 
 inline void print_sret(Operands operands, std::ostream *out) {
@@ -80,12 +79,12 @@ constexpr CodePoint inst_sret = {
 // -- mret --
 
 template<typename XLEN_t>
-inline void ex_mret(Operands operands, HartState *state) {
+inline void ex_mret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (state->privilegeMode < RISCV::PrivilegeMode::Machine) {
-        state->RaiseException<XLEN_t>(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
+        state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<XLEN_t, RISCV::PrivilegeMode::Machine>();
+    state->ReturnFromTrap<RISCV::PrivilegeMode::Machine>();
 }
 
 inline void print_mret(Operands operands, std::ostream *out) {
@@ -104,7 +103,7 @@ constexpr CodePoint inst_mret = {
 // -- sfencevma --
 
 template<typename XLEN_t>
-inline void ex_sfencevma(Operands operands, HartState *state) {
+inline void ex_sfencevma(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     state->notifyVMFenceRequested();
 }
 

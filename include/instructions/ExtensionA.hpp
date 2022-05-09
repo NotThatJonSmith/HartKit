@@ -3,21 +3,21 @@
 #include <RiscV.hpp>
 
 #include <CodePoint.hpp>
-#include <Operands.hpp>
 
 // -- lrw --
 
 template<typename XLEN_t>
-inline void ex_lrw(Operands operands, HartState *state) {
+inline void ex_lrw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // Does rd have to contain 0? If nonzero, is it an illegal instruction?
     __uint32_t tmp = 0;
-    XLEN_t read_address = state->regs[operands.R.rs1].Read<XLEN_t>();
+    XLEN_t read_address = state->regs[operands.R.rs1];
     XLEN_t read_size = 4;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(read_address, read_size, (char*)&tmp);
-    if (!success) {
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp); // NOTE sign extend for RV64
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0; // NOTE sign extend for RV64
 }
 
 inline void print_lrw(Operands operands, std::ostream *out) {
@@ -39,7 +39,7 @@ constexpr CodePoint inst_lrw = {
 // -- lrd --
 
 template<typename XLEN_t>
-inline void ex_lrd(Operands operands, HartState *state) {
+inline void ex_lrd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -60,15 +60,16 @@ constexpr CodePoint inst_lrd = {
 // -- scw --
 
 template<typename XLEN_t>
-inline void ex_scw(Operands operands, HartState *state) {
-    XLEN_t tmp = state->regs[operands.R.rs2].Read<XLEN_t>();
-    XLEN_t write_address = state->regs[operands.R.rs1].Read<XLEN_t>();
+inline void ex_scw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t tmp = state->regs[operands.R.rs2];
+    XLEN_t write_address = state->regs[operands.R.rs1];
     XLEN_t write_size = 4;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::W>(write_address, write_size, (char*)&tmp);
-    if (!success) {
-        return; // TODO or else what??
+    Transaction<XLEN_t> transaction = mem->Write(write_address, write_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_address);
+        return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(0); // NOTE, zero means sc succeeded - for now it always does!
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? 0 : 0; // NOTE, zero means sc succeeded - for now it always does!
 }
 
 inline void print_scw(Operands operands, std::ostream *out) {
@@ -90,7 +91,7 @@ constexpr CodePoint inst_scw = {
 // -- scd --
 
 template<typename XLEN_t>
-inline void ex_scd(Operands operands, HartState *state) {
+inline void ex_scd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -111,15 +112,18 @@ constexpr CodePoint inst_scd = {
 // -- amoaddw --
 
 template<typename XLEN_t>
-inline void ex_amoaddw(Operands operands, HartState *state) {
+inline void ex_amoaddw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t tmp = 0;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
-    if (!success) {
+    XLEN_t read_address = state->regs[operands.R.rs1];
+    XLEN_t read_size = 4;
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp);
-    tmp += state->regs[operands.R.rs2].Read<XLEN_t>();
-    state->Transact<XLEN_t, CASK::AccessType::W>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0;
+    tmp += state->regs[operands.R.rs2];
+    mem->Write(state->regs[operands.R.rs1], 4, (char*)&tmp);
 }
 
 inline void print_amoaddw(Operands operands, std::ostream *out) {
@@ -141,7 +145,7 @@ constexpr CodePoint inst_amoaddw = {
 // -- amoaddd --
 
 template<typename XLEN_t>
-inline void ex_amoaddd(Operands operands, HartState *state) {
+inline void ex_amoaddd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -162,15 +166,18 @@ constexpr CodePoint inst_amoaddd = {
 // -- amoswapw --
 
 template<typename XLEN_t>
-inline void ex_amoswapw(Operands operands, HartState *state) {
+inline void ex_amoswapw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t tmp = 0;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
-    if (!success) {
+    XLEN_t read_address = state->regs[operands.R.rs1];
+    XLEN_t read_size = 4;
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp);
-    tmp = state->regs[operands.R.rs2].Read<XLEN_t>();
-    state->Transact<XLEN_t, CASK::AccessType::W>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0;
+    tmp = state->regs[operands.R.rs2];
+    mem->Write(state->regs[operands.R.rs1], 4, (char*)&tmp);
 }
 
 inline void print_amoswapw(Operands operands, std::ostream *out) {
@@ -192,7 +199,7 @@ constexpr CodePoint inst_amoswapw = {
 // -- amoswapd --
 
 template<typename XLEN_t>
-inline void ex_amoswapd(Operands operands, HartState *state) {
+inline void ex_amoswapd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -213,15 +220,18 @@ constexpr CodePoint inst_amoswapd = {
 // -- amoxorw --
 
 template<typename XLEN_t>
-inline void ex_amoxorw(Operands operands, HartState *state) {
+inline void ex_amoxorw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t tmp = 0;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
-    if (!success) {
+    XLEN_t read_address = state->regs[operands.R.rs1];
+    XLEN_t read_size = 4;
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp);
-    tmp ^= state->regs[operands.R.rs2].Read<XLEN_t>();
-    state->Transact<XLEN_t, CASK::AccessType::W>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0;
+    tmp ^= state->regs[operands.R.rs2];
+    mem->Write(state->regs[operands.R.rs1], 4, (char*)&tmp);
 }
 
 inline void print_amoxorw(Operands operands, std::ostream *out) {
@@ -243,7 +253,7 @@ constexpr CodePoint inst_amoxorw = {
 // -- amoxord --
 
 template<typename XLEN_t>
-inline void ex_amoxord(Operands operands, HartState *state) {
+inline void ex_amoxord(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -264,15 +274,18 @@ constexpr CodePoint inst_amoxord = {
 // -- amoorw --
 
 template<typename XLEN_t>
-inline void ex_amoorw(Operands operands, HartState *state) {
+inline void ex_amoorw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t tmp = 0;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
-    if (!success) {
+    XLEN_t read_address = state->regs[operands.R.rs1];
+    XLEN_t read_size = 4;
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp);
-    tmp |= state->regs[operands.R.rs2].Read<XLEN_t>();
-    state->Transact<XLEN_t, CASK::AccessType::W>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0;
+    tmp |= state->regs[operands.R.rs2];
+    mem->Write(state->regs[operands.R.rs1], 4, (char*)&tmp);
 }
 
 inline void print_amoorw(Operands operands, std::ostream *out) {
@@ -294,7 +307,7 @@ constexpr CodePoint inst_amoorw = {
 // -- amoord --
 
 template<typename XLEN_t>
-inline void ex_amoord(Operands operands, HartState *state) {
+inline void ex_amoord(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -315,15 +328,18 @@ constexpr CodePoint inst_amoord = {
 // -- amoandw --
 
 template<typename XLEN_t>
-inline void ex_amoandw(Operands operands, HartState *state) {
+inline void ex_amoandw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t tmp = 0;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
-    if (!success) {
+    XLEN_t read_address = state->regs[operands.R.rs1];
+    XLEN_t read_size = 4;
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(tmp);
-    tmp &= state->regs[operands.R.rs2].Read<XLEN_t>();
-    state->Transact<XLEN_t, CASK::AccessType::W>(state->regs[operands.R.rs1].Read<XLEN_t>(), 4, (char*)&tmp);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? tmp : 0;
+    tmp &= state->regs[operands.R.rs2];
+    mem->Write(state->regs[operands.R.rs1], 4, (char*)&tmp);
 }
 
 inline void print_amoandw(Operands operands, std::ostream *out) {
@@ -345,7 +361,7 @@ constexpr CodePoint inst_amoandw = {
 // -- amoandd --
 
 template<typename XLEN_t>
-inline void ex_amoandd(Operands operands, HartState *state) {
+inline void ex_amoandd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -366,7 +382,7 @@ constexpr CodePoint inst_amoandd = {
 // -- amominw --
 
 template<typename XLEN_t>
-inline void ex_amominw(Operands operands, HartState *state) {
+inline void ex_amominw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -387,7 +403,7 @@ constexpr CodePoint inst_amominw = {
 // -- amomind --
 
 template<typename XLEN_t>
-inline void ex_amomind(Operands operands, HartState *state) {
+inline void ex_amomind(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -408,7 +424,7 @@ constexpr CodePoint inst_amomind = {
 // -- amomaxw --
 
 template<typename XLEN_t>
-inline void ex_amomaxw(Operands operands, HartState *state) {
+inline void ex_amomaxw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -429,7 +445,7 @@ constexpr CodePoint inst_amomaxw = {
 // -- amomaxd --
 
 template<typename XLEN_t>
-inline void ex_amomaxd(Operands operands, HartState *state) {
+inline void ex_amomaxd(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -450,7 +466,7 @@ constexpr CodePoint inst_amomaxd = {
 // -- amominuw --
 
 template<typename XLEN_t>
-inline void ex_amominuw(Operands operands, HartState *state) {
+inline void ex_amominuw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -471,7 +487,7 @@ constexpr CodePoint inst_amominuw = {
 // -- amominud --
 
 template<typename XLEN_t>
-inline void ex_amominud(Operands operands, HartState *state) {
+inline void ex_amominud(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -492,7 +508,7 @@ constexpr CodePoint inst_amominud = {
 // -- amomaxuw --
 
 template<typename XLEN_t>
-inline void ex_amomaxuw(Operands operands, HartState *state) {
+inline void ex_amomaxuw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 
@@ -513,7 +529,7 @@ constexpr CodePoint inst_amomaxuw = {
 // -- amomaxud --
 
 template<typename XLEN_t>
-inline void ex_amomaxud(Operands operands, HartState *state) {
+inline void ex_amomaxud(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
 }
 

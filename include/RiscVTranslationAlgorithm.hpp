@@ -2,15 +2,26 @@
 
 #include <RiscV.hpp>
 #include <Swizzle.hpp>
-#include <IOTarget.hpp>
-
-#include <HartState.hpp>
 #include <Translation.hpp>
+#include <Transactor.hpp>
+#include <HartState.hpp>
 
-template<typename XLEN_t, CASK::AccessType accessType>
+
+template<typename XLEN_t, IOVerb verb>
+inline Translation<XLEN_t> PageFault(XLEN_t virt_addr) {
+    if constexpr (verb == IOVerb::Read) {
+        return { virt_addr, 0, 0, RISCV::TrapCause::LOAD_PAGE_FAULT };
+    } else if constexpr (verb == IOVerb::Write) {
+        return { virt_addr, 0, 0, RISCV::TrapCause::STORE_AMO_PAGE_FAULT };
+    } else {
+        return { virt_addr, 0, 0, RISCV::TrapCause::INSTRUCTION_PAGE_FAULT };
+    }
+}
+
+template<typename XLEN_t, IOVerb verb>
 static inline Translation<XLEN_t> TranslationAlgorithm(
         XLEN_t virt_addr,
-        CASK::IOTarget* bus,
+        Transactor<XLEN_t>* transactor,
         XLEN_t root_ppn,
         RISCV::PagingMode currentPagingMode,
         RISCV::PrivilegeMode translationPrivilege,
@@ -53,7 +64,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     //    PAGESIZE=2**12 and LEVELS=2.)
 
     XLEN_t a = root_ppn * pagesize;
-    XLEN_t pte = 0; // TODO PTE should not be XLEN_t but should be Sv** determined
+    XLEN_t pte = 0; // TODO PTE should be Sv** determined, not XLEN_t sized...
 
     while (true) {
 
@@ -63,7 +74,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
         //    access type.
 
         XLEN_t pteaddr = a + (vpn[i] * ptesize);
-        bus->Read<XLEN_t>(pteaddr, ptesize, (char*)&pte);
+        transactor->Read(pteaddr, ptesize, (char*)&pte);
 
         // TODO PMA & PMP checks
 
@@ -73,7 +84,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
 
         if ( !(pte & RISCV::PTEBit::V) ||
             (!(pte & RISCV::PTEBit::R) && (pte & RISCV::PTEBit::W))) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
 
         // 4. Otherwise, the PTE is valid. If pte.r = 1 or pte.x = 1, go to
@@ -87,7 +98,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
         }
 
         if (i == 0) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
         i = i-1;
 
@@ -124,18 +135,19 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     // succeed. MXR has no effect when page-based virtual memory is not in
     // effect.
 
-    if (accessType == CASK::AccessType::R) {
+    // TODO this could be constexpr if not for pedantry wrt mxrBit
+    if (verb == IOVerb::Read) {
         if (!(pte & RISCV::PTEBit::R) &&
             !((pte & RISCV::PTEBit::X) && mxrBit)) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
-    } else if (accessType == CASK::AccessType::W) {
+    } else if (verb == IOVerb::Write) {
         if (!(pte & RISCV::PTEBit::W)) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
     } else {
         if (!(pte & RISCV::PTEBit::X)) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
     }
     
@@ -149,7 +161,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
 
     if (translationPrivilege == RISCV::PrivilegeMode::User &&
         !(pte & RISCV::PTEBit::U)) {
-        return PageFault<XLEN_t, accessType>(virt_addr);
+        return PageFault<XLEN_t, verb>(virt_addr);
     }
 
     // The SUM (permit Supervisor User Memory access) bit modifies the
@@ -164,7 +176,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     if (translationPrivilege == RISCV::PrivilegeMode::Supervisor &&
         (pte & RISCV::PTEBit::U) &&
         !sumBit) {
-        return PageFault<XLEN_t, accessType>(virt_addr);
+        return PageFault<XLEN_t, verb>(virt_addr);
     }
 
     XLEN_t ppn[4];
@@ -189,7 +201,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     if (i > 0) {
         for (unsigned int lv = 0; lv < i; lv++) {
             if (ppn[lv] != 0) {
-                return PageFault<XLEN_t, accessType>(virt_addr);
+                return PageFault<XLEN_t, verb>(virt_addr);
             }
         }
     }
@@ -208,12 +220,12 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     // TODO the alternative A/D bit scheme mentioned in the spec.
 
     if (!(pte & RISCV::PTEBit::A)) {
-        return PageFault<XLEN_t, accessType>(virt_addr);
+        return PageFault<XLEN_t, verb>(virt_addr);
     }
 
-    if constexpr (accessType == CASK::AccessType::W) {
+    if constexpr (verb == IOVerb::Write) {
         if (!(pte & RISCV::PTEBit::D)) {
-            return PageFault<XLEN_t, accessType>(virt_addr);
+            return PageFault<XLEN_t, verb>(virt_addr);
         }
     }
 
@@ -248,28 +260,4 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
 
     return { virt_addr, phys_addr, virt_valid_through, RISCV::TrapCause::NONE };
 
-}
-
-// The heavily-templated version where the algorithm should get inlined and optimized
-template<typename XLEN_t, CASK::AccessType accessType, RISCV::PagingMode currentPagingMode,
-         RISCV::PrivilegeMode translationPrivilege, bool mxrBit, bool sumBit>
-inline Translation<XLEN_t> TranslationTemplate(XLEN_t virt_addr, CASK::IOTarget* bus, XLEN_t root_ppn) {
-    return TranslationAlgorithm<XLEN_t, accessType>(virt_addr, bus, root_ppn, currentPagingMode, translationPrivilege, mxrBit, sumBit);
-}
-
-// The lightly-templated version where the algorithm should just get stamped in place with no optimizations
-template<typename XLEN_t, CASK::AccessType accessType>
-inline Translation<XLEN_t> TranslationFunction(XLEN_t virt_addr, CASK::IOTarget* bus, HartState* state) {
-    // The MPRV (Modify PRiVilege) bit modifies the privilege level at which
-    // loads and stores execute in all privilege modes. When MPRV=0, loads and
-    // stores behave as normal, using the translation and protection mechanisms
-    // of the current privilege mode. When MPRV=1, load and store memory
-    // addresses are translated and protected as though the current privilege
-    // mode were set to MPP. Instruction address-translation and protection are
-    // unaffected by the setting of MPRV. MPRV is hardwired to 0 if U-mode is
-    // not supported.
-    RISCV::PrivilegeMode translationPrivilege =
-        state->modifyMemoryPrivilege ? state->machinePreviousPrivilege
-                                        : state->privilegeMode;
-    return TranslationAlgorithm<XLEN_t, accessType>(virt_addr, bus, state->ppn.Read<XLEN_t>(), state->pagingMode, translationPrivilege, state->makeExecutableReadable, state->supervisorUserMemoryAccess);
 }

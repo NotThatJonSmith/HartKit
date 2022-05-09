@@ -4,11 +4,11 @@
 
 #include <RiscV.hpp>
 
-#include <CodePoint.hpp>
-#include <Operands.hpp>
 #include <HartState.hpp>
+#include <Transactor.hpp>
 
 #include <SignedXLEN.hpp>
+#include <CodePoint.hpp>
 
 // -- Common Base ISA Fields --
 
@@ -32,11 +32,11 @@ inline Operands r_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_add(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_add(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value + rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_add(Operands operands, std::ostream *out) {
@@ -58,11 +58,11 @@ constexpr CodePoint inst_add = {
 // -- sub --
 
 template<typename XLEN_t>
-inline void ex_sub(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_sub(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value - rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_sub(Operands operands, std::ostream *out) {
@@ -84,11 +84,11 @@ constexpr CodePoint inst_sub = {
 // -- sll --
 
 template<typename XLEN_t>
-inline void ex_sll(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_sll(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value << rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_sll(Operands operands, std::ostream *out) {
@@ -110,14 +110,14 @@ constexpr CodePoint inst_sll = {
 // -- slt --
 
 template<typename XLEN_t>
-inline void ex_slt(Operands operands, HartState *state) {
+inline void ex_slt(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t unsigned_rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
+    XLEN_t unsigned_rs1_value = state->regs[operands.R.rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
-    XLEN_t unsigned_rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+    XLEN_t unsigned_rs2_value = state->regs[operands.R.rs2];
     SXLEN_t rs2_value = *((SXLEN_t*)&unsigned_rs2_value);
     XLEN_t rd_value = rs1_value < rs2_value ? 1 : 0;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_slt(Operands operands, std::ostream *out) {
@@ -139,11 +139,11 @@ constexpr CodePoint inst_slt = {
 // -- sltu --
 
 template<typename XLEN_t>
-inline void ex_sltu(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_sltu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value < rs2_value ? 1 : 0;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_sltu(Operands operands, std::ostream *out) {
@@ -165,11 +165,11 @@ constexpr CodePoint inst_sltu = {
 // -- xor --
 
 template<typename XLEN_t>
-inline void ex_xor(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_xor(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value ^ rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_xor(Operands operands, std::ostream *out) {
@@ -191,15 +191,15 @@ constexpr CodePoint inst_xor = {
 // -- sra --
 
 template<typename XLEN_t>
-inline void ex_sra(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_sra(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value >> rs2_value;
     constexpr XLEN_t xlen_bits = sizeof(XLEN_t) * 8;
     if (rs1_value & ((XLEN_t)1 << (xlen_bits - 1))) {
         rd_value |= ((1 << rs2_value)-1) << (xlen_bits-rs2_value);
     }
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_sra(Operands operands, std::ostream *out) {
@@ -221,11 +221,11 @@ constexpr CodePoint inst_sra = {
 // -- srl --
 
 template<typename XLEN_t>
-inline void ex_srl(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_srl(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value >> rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_srl(Operands operands, std::ostream *out) {
@@ -247,11 +247,11 @@ constexpr CodePoint inst_srl = {
 // -- or --
 
 template<typename XLEN_t>
-inline void ex_or(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_or(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value | rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_or(Operands operands, std::ostream *out) {
@@ -273,11 +273,11 @@ constexpr CodePoint inst_or = {
 // -- and --
 
 template<typename XLEN_t>
-inline void ex_and(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.R.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.R.rs2].Read<XLEN_t>();
+inline void ex_and(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.R.rs1];
+    XLEN_t rs2_value = state->regs[operands.R.rs2];
     XLEN_t rd_value = rs1_value & rs2_value;
-    state->regs[operands.R.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.R.rd] = operands.R.rd != 0 ? rd_value : 0;
 }
 
 inline void print_and(Operands operands, std::ostream *out) {
@@ -307,12 +307,12 @@ inline Operands i_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_addi(Operands operands, HartState *state) {
+inline void ex_addi(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t rd_value = rs1_value + imm_value;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_addi(Operands operands, std::ostream *out) {
@@ -342,10 +342,10 @@ inline Operands i_shift_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_slli(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_slli(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     XLEN_t rd_value = rs1_value << operands.I.imm.u;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_slli(Operands operands, std::ostream *out) {
@@ -367,10 +367,10 @@ constexpr CodePoint inst_slli = {
 // -- srli --
 
 template<typename XLEN_t>
-inline void ex_srli(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_srli(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     XLEN_t rd_value = rs1_value >> operands.I.imm.u;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_srli(Operands operands, std::ostream *out) {
@@ -392,14 +392,14 @@ constexpr CodePoint inst_srli = {
 // -- srai --
 
 template<typename XLEN_t>
-inline void ex_srai(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_srai(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     __uint16_t imm_value = operands.I.imm.u;
     XLEN_t rd_value = rs1_value >> imm_value;
     // Spec says: the original sign bit is copied into the vacated upper bits
     if (rs1_value & ((XLEN_t)1 << ((sizeof(XLEN_t)*8)-1)))
         rd_value |= (XLEN_t)((1 << imm_value)-1) << ((sizeof(XLEN_t)*8)-imm_value);
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_srai(Operands operands, std::ostream *out) {
@@ -421,13 +421,13 @@ constexpr CodePoint inst_srai = {
 // -- slti --
 
 template<typename XLEN_t>
-inline void ex_slti(Operands operands, HartState *state) {
+inline void ex_slti(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t unsigned_rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t unsigned_rs1_value = state->regs[operands.I.rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t rd_value = rs1_value < imm_value ? 1 : 0;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_slti(Operands operands, std::ostream *out) {
@@ -449,11 +449,11 @@ constexpr CodePoint inst_slti = {
 // -- sltiu --
 
 template<typename XLEN_t>
-inline void ex_sltiu(Operands operands, HartState *state) {
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_sltiu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     XLEN_t imm_value = operands.I.imm.u;
     XLEN_t rd_value = rs1_value < imm_value ? 1 : 0;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value); 
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0; 
 }
 
 inline void print_sltiu(Operands operands, std::ostream *out) {
@@ -475,13 +475,13 @@ constexpr CodePoint inst_sltiu = {
 // -- xori --
 
 template<typename XLEN_t>
-inline void ex_xori(Operands operands, HartState *state) {
+inline void ex_xori(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
     XLEN_t rd_value = rs1_value ^ imm_value;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_xori(Operands operands, std::ostream *out) {
@@ -503,13 +503,13 @@ constexpr CodePoint inst_xori = {
 // -- ori --
 
 template<typename XLEN_t>
-inline void ex_ori(Operands operands, HartState *state) {
+inline void ex_ori(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
     XLEN_t rd_value = rs1_value | imm_value;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_ori(Operands operands, std::ostream *out) {
@@ -531,13 +531,13 @@ constexpr CodePoint inst_ori = {
 // -- andi --
 
 template<typename XLEN_t>
-inline void ex_andi(Operands operands, HartState *state) {
+inline void ex_andi(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value_signed = operands.I.imm.s;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
     XLEN_t rd_value = rs1_value & imm_value;
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_andi(Operands operands, std::ostream *out) {
@@ -566,10 +566,10 @@ inline Operands u_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_lui(Operands operands, HartState *state) {
+inline void ex_lui(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t imm_value = operands.U.imm.u;
     XLEN_t rd_value = imm_value;
-    state->regs[operands.U.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.U.rd] = operands.U.rd != 0 ? rd_value : 0;
 }
 
 inline void print_lui(Operands operands, std::ostream *out) {
@@ -590,11 +590,11 @@ constexpr CodePoint inst_lui = {
 // -- auipc --
 
 template<typename XLEN_t>
-inline void ex_auipc(Operands operands, HartState *state) {
-    XLEN_t pc_value = state->currentFetch->virtualPC.Read<XLEN_t>();
+inline void ex_auipc(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t pc_value = state->currentFetch->virtualPC;
     XLEN_t imm_value = operands.U.imm.u;
     XLEN_t rd_value = pc_value + imm_value;
-    state->regs[operands.U.rd].Write<XLEN_t>(rd_value);
+    state->regs[operands.U.rd] = operands.U.rd != 0 ? rd_value : 0;
 }
 
 inline void print_auipc(Operands operands, std::ostream *out) {
@@ -622,12 +622,12 @@ inline Operands j_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_jal(Operands operands, HartState *state) {
-    XLEN_t next_pc_value = state->nextFetchVirtualPC->Read<XLEN_t>();
-    state->regs[operands.U.rd].Write<XLEN_t>(next_pc_value);
-    XLEN_t pc_value = state->currentFetch->virtualPC.Read<XLEN_t>();
+inline void ex_jal(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t next_pc_value = state->nextFetchVirtualPC;
+    state->regs[operands.U.rd] = operands.U.rd != 0 ? next_pc_value : 0;
+    XLEN_t pc_value = state->currentFetch->virtualPC;
     XLEN_t new_pc_value = pc_value + operands.U.imm.s;
-    state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+    state->nextFetchVirtualPC = new_pc_value;
 }
 
 inline void print_jal(Operands operands, std::ostream *out) {
@@ -648,15 +648,15 @@ constexpr CodePoint inst_jal = {
 // -- jalr --
 
 template<typename XLEN_t>
-inline void ex_jalr(Operands operands, HartState *state) {
+inline void ex_jalr(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rd_value = state->nextFetchVirtualPC->Read<XLEN_t>();
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rd_value = state->nextFetchVirtualPC;
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     imm_value &= ~(XLEN_t)1;
     XLEN_t new_pc_value = rs1_value + imm_value;
-    state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
-    state->regs[operands.I.rd].Write<XLEN_t>(rd_value);
+    state->nextFetchVirtualPC = new_pc_value;
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? rd_value : 0;
 }
 
 inline void print_jalr(Operands operands, std::ostream *out) {
@@ -686,14 +686,14 @@ inline Operands b_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_beq(Operands operands, HartState *state) {
+inline void ex_beq(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.S.rs1];
+    XLEN_t rs2_value = state->regs[operands.S.rs2];
     SXLEN_t imm_value = operands.S.imm.s;
     if (rs1_value == rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -716,14 +716,14 @@ constexpr CodePoint inst_beq = {
 // -- bne --
 
 template<typename XLEN_t>
-inline void ex_bne(Operands operands, HartState *state) {
+inline void ex_bne(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.S.rs1];
+    XLEN_t rs2_value = state->regs[operands.S.rs2];
     SXLEN_t imm_value = operands.S.imm.s;
     if (rs1_value != rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -746,16 +746,16 @@ constexpr CodePoint inst_bne = {
 // -- blt --
 
 template<typename XLEN_t>
-inline void ex_blt(Operands operands, HartState *state) {
+inline void ex_blt(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
+    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
-    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2];
     SXLEN_t rs2_value = *((SXLEN_t*)&unsigned_rs2_value);
     SXLEN_t imm_value = operands.S.imm.s;
     if (rs1_value < rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -778,16 +778,16 @@ constexpr CodePoint inst_blt = {
 // -- bge --
 
 template<typename XLEN_t>
-inline void ex_bge(Operands operands, HartState *state) {
+inline void ex_bge(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
+    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
-    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2];
     SXLEN_t rs2_value = *((SXLEN_t*)&unsigned_rs2_value);
     SXLEN_t imm_value = operands.S.imm.s;
     if (rs1_value >= rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -810,14 +810,14 @@ constexpr CodePoint inst_bge = {
 // -- bltu --
 
 template<typename XLEN_t>
-inline void ex_bltu(Operands operands, HartState *state) {
-    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+inline void ex_bltu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1];
+    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2];
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t imm_value = operands.S.imm.s;
     if (unsigned_rs1_value < unsigned_rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -840,14 +840,14 @@ constexpr CodePoint inst_bltu = {
 // -- bgeu --
 
 template<typename XLEN_t>
-inline void ex_bgeu(Operands operands, HartState *state) {
-    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+inline void ex_bgeu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t unsigned_rs1_value = state->regs[operands.S.rs1];
+    XLEN_t unsigned_rs2_value = state->regs[operands.S.rs2];
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t imm_value = operands.S.imm.s;
     if (unsigned_rs1_value >= unsigned_rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC.Read<XLEN_t>() + imm_value;
-        state->nextFetchVirtualPC->Write<XLEN_t>(new_pc_value);
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
@@ -870,19 +870,20 @@ constexpr CodePoint inst_bgeu = {
 // -- lb --
 
 template<typename XLEN_t>
-inline void ex_lb(Operands operands, HartState *state) {
+inline void ex_lb(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint8_t word;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t read_address = rs1_value + imm_value;
     XLEN_t read_size = 1;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(read_address, read_size, (char*)&word);
-    if (!success) {
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     SXLEN_t sign_extended_word = (SXLEN_t)word;
-    state->regs[operands.I.rd].Write<XLEN_t>(sign_extended_word);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? sign_extended_word : 0;
 }
 
 inline void print_lb(Operands operands, std::ostream *out) {
@@ -904,19 +905,20 @@ constexpr CodePoint inst_lb = {
 // -- lh --
 
 template<typename XLEN_t>
-inline void ex_lh(Operands operands, HartState *state) {
+inline void ex_lh(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint16_t word;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t read_address = rs1_value + imm_value;
     XLEN_t read_size = 2;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(read_address, read_size, (char*)&word);
-    if (!success) {
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     SXLEN_t sign_extended_word = (SXLEN_t)word;
-    state->regs[operands.I.rd].Write<XLEN_t>(sign_extended_word);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? sign_extended_word : 0;
 }
 
 inline void print_lh(Operands operands, std::ostream *out) {
@@ -939,18 +941,19 @@ constexpr CodePoint inst_lh = {
 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 template<typename XLEN_t>
-inline void ex_lw(Operands operands, HartState *state) {
+inline void ex_lw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t word;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t read_address = rs1_value + imm_value;
     XLEN_t read_size = 4;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(read_address, read_size, (char*)&word);
-    if (!success) {
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[operands.I.rd].Write<XLEN_t>(word);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? word : 0;
 }
 
 inline void print_lw(Operands operands, std::ostream *out) {
@@ -972,20 +975,21 @@ constexpr CodePoint inst_lw = {
 // -- lbu --
 
 template<typename XLEN_t>
-inline void ex_lbu(Operands operands, HartState *state) {
+inline void ex_lbu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint8_t word;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t read_address = rs1_value + imm_value;
     XLEN_t read_size = 1;
-    bool success = state->Transact<XLEN_t, CASK::AccessType::R>(read_address, read_size, (char*)&word);
-    if (!success) {
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     SXLEN_t signed_word = word;
     XLEN_t unsigned_word = *((XLEN_t*)(&signed_word));
-    state->regs[operands.I.rd].Write<XLEN_t>(unsigned_word);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? unsigned_word : 0;
 }
 
 inline void print_lbu(Operands operands, std::ostream *out) {
@@ -1007,21 +1011,21 @@ constexpr CodePoint inst_lbu = {
 // -- lhu --
 
 template<typename XLEN_t>
-inline void ex_lhu(Operands operands, HartState *state) {
+inline void ex_lhu(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint16_t word;
-    XLEN_t rs1_value = state->regs[operands.I.rs1].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.I.rs1];
     SXLEN_t imm_value = operands.I.imm.s;
     XLEN_t read_address = rs1_value + imm_value;
     XLEN_t read_size = 2;
-    TransactionResult<XLEN_t> transactionResult = state->mmu->Read<XLEN_t>(read_address, read_size, (char*)&word);
-    if (transactionResult.trapCause != RISCV::TrapCause::NONE) {
-        state->RaiseException<XLEN_t>(transactionResult.trapCause, read_address);
+    Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     SXLEN_t signed_word = word;
     XLEN_t unsigned_word = *((XLEN_t*)(&signed_word));
-    state->regs[operands.I.rd].Write<XLEN_t>(unsigned_word);
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? unsigned_word : 0;
 }
 
 inline void print_lhu(Operands operands, std::ostream *out) {
@@ -1051,15 +1055,15 @@ inline Operands s_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_sb(Operands operands, HartState *state) {
+inline void ex_sb(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.S.rs1];
+    XLEN_t rs2_value = state->regs[operands.S.rs2];
     SXLEN_t imm_value = operands.S.imm.s;
     XLEN_t write_addr = rs1_value + imm_value;
     __uint8_t write_value = rs2_value & (XLEN_t)0xff;
     XLEN_t write_size = sizeof(write_value);
-    state->Transact<XLEN_t, CASK::AccessType::W>(write_addr, write_size, (char*)&write_value);
+    mem->Write(write_addr, write_size, (char*)&write_value);
 }
 
 inline void print_sb(Operands operands, std::ostream *out) {
@@ -1081,15 +1085,15 @@ constexpr CodePoint inst_sb = {
 // -- sh --
 
 template<typename XLEN_t>
-inline void ex_sh(Operands operands, HartState *state) {
+inline void ex_sh(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.S.rs1];
+    XLEN_t rs2_value = state->regs[operands.S.rs2];
     SXLEN_t imm_value = operands.S.imm.s;
     XLEN_t write_addr = rs1_value + imm_value;
     __uint16_t write_value = rs2_value & (XLEN_t)0xffff;
     XLEN_t write_size = sizeof(write_value);
-    state->Transact<XLEN_t, CASK::AccessType::W>(write_addr, write_size, (char*)&write_value);
+    mem->Write(write_addr, write_size, (char*)&write_value);
 }
 
 inline void print_sh(Operands operands, std::ostream *out) {
@@ -1111,15 +1115,15 @@ constexpr CodePoint inst_sh = {
 // -- sw --
 
 template<typename XLEN_t>
-inline void ex_sw(Operands operands, HartState *state) {
+inline void ex_sw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    XLEN_t rs1_value = state->regs[operands.S.rs1].Read<XLEN_t>();
-    XLEN_t rs2_value = state->regs[operands.S.rs2].Read<XLEN_t>();
+    XLEN_t rs1_value = state->regs[operands.S.rs1];
+    XLEN_t rs2_value = state->regs[operands.S.rs2];
     SXLEN_t imm_value = operands.S.imm.s;
     XLEN_t write_addr = rs1_value + imm_value;
     __uint32_t write_value = rs2_value & (XLEN_t)0xffffffff;
     XLEN_t write_size = sizeof(write_value);
-    state->Transact<XLEN_t, CASK::AccessType::W>(write_addr, write_size, (char*)&write_value);
+    mem->Write(write_addr, write_size, (char*)&write_value);
 }
 
 inline void print_sw(Operands operands, std::ostream *out) {
@@ -1141,7 +1145,7 @@ constexpr CodePoint inst_sw = {
 // -- fence --
 
 template<typename XLEN_t>
-inline void ex_fence(Operands operands, HartState *state) {
+inline void ex_fence(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // NOP for now.
 }
 
@@ -1166,7 +1170,7 @@ inline Operands no_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_fencei(Operands operands, HartState *state) {
+inline void ex_fencei(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     state->notifyInstructionFenceRequested();
 }
 
@@ -1187,12 +1191,12 @@ constexpr CodePoint inst_fencei = {
 // -- ecall --
 
 template<typename XLEN_t>
-inline void ex_ecall(Operands operands, HartState *state) {
+inline void ex_ecall(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     RISCV::TrapCause cause =
         state->privilegeMode == RISCV::PrivilegeMode::Machine ? RISCV::TrapCause::ECALL_FROM_M_MODE :
         state->privilegeMode == RISCV::PrivilegeMode::Supervisor ? RISCV::TrapCause::ECALL_FROM_S_MODE :
         RISCV::TrapCause::ECALL_FROM_U_MODE;
-    state->RaiseException<XLEN_t>(cause, state->currentFetch->encoding);
+    state->RaiseException(cause, state->currentFetch->encoding);
 }
 
 inline void print_ecall(Operands operands, std::ostream *out) {
@@ -1212,13 +1216,12 @@ constexpr CodePoint inst_ecall = {
 // -- ebreak --
 
 template<typename XLEN_t>
-inline void ex_ebreak(Operands operands, HartState *state) {
-    state->RaiseException<XLEN_t>(RISCV::TrapCause::BREAKPOINT, state->currentFetch->encoding);
+inline void ex_ebreak(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    state->RaiseException(RISCV::TrapCause::BREAKPOINT, state->currentFetch->encoding);
 }
 
 inline void print_ebreak(Operands operands, std::ostream *out) {
-    *out << "ebreak"
-         << std::endl;
+    *out << "ebreak" << std::endl;
 }
 
 constexpr CodePoint inst_ebreak = {
@@ -1241,8 +1244,8 @@ inline Operands csr_operands_from(__uint32_t inst) {
 }
 
 template<typename XLEN_t>
-inline void ex_csrrw(Operands operands, HartState *state) {
-    XLEN_t regVal = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_csrrw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t regVal = state->regs[operands.I.rs1];
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
@@ -1252,10 +1255,10 @@ inline void ex_csrrw(Operands operands, HartState *state) {
         return;
     }
     if (operands.I.rd != 0) {
-        XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-        state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
+        XLEN_t csrValue = state->csrs[csr].Read();
+        state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     }
-    state->csrs[csr]->Write<XLEN_t>(regVal);
+    state->csrs[csr].Write(regVal);
 }
 
 inline void print_csrrw(Operands operands, std::ostream *out) {
@@ -1277,8 +1280,8 @@ constexpr CodePoint inst_csrrw = {
 // -- csrrs --
 
 template<typename XLEN_t>
-inline void ex_csrrs(Operands operands, HartState *state) {
-    XLEN_t regVal = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_csrrs(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t regVal = state->regs[operands.I.rs1];
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
@@ -1286,10 +1289,10 @@ inline void ex_csrrs(Operands operands, HartState *state) {
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-    state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
+    XLEN_t csrValue = state->csrs[csr].Read();
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     if (operands.I.rs1 != 0) {
-        state->csrs[csr]->Write<XLEN_t>(csrValue | regVal);
+        state->csrs[csr].Write(csrValue | regVal);
     }
 }
 
@@ -1312,8 +1315,8 @@ constexpr CodePoint inst_csrrs = {
 // -- csrrc --
 
 template<typename XLEN_t>
-inline void ex_csrrc(Operands operands, HartState *state) {
-    XLEN_t regVal = state->regs[operands.I.rs1].Read<XLEN_t>();
+inline void ex_csrrc(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    XLEN_t regVal = state->regs[operands.I.rs1];
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
@@ -1321,10 +1324,10 @@ inline void ex_csrrc(Operands operands, HartState *state) {
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-    state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
+    XLEN_t csrValue = state->csrs[csr].Read();
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     if (operands.I.rs1 != 0) {
-        state->csrs[csr]->Write<XLEN_t>(~csrValue & regVal);
+        state->csrs[csr].Write(~csrValue & regVal);
     }
 }
 
@@ -1347,7 +1350,7 @@ constexpr CodePoint inst_csrrc = {
 // -- csrrwi --
 
 template<typename XLEN_t>
-inline void ex_csrrwi(Operands operands, HartState *state) {
+inline void ex_csrrwi(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     XLEN_t imm_value = operands.I.rs1;
     bool readOnly = RISCV::csrIsReadOnly(csr);
@@ -1357,10 +1360,10 @@ inline void ex_csrrwi(Operands operands, HartState *state) {
         return;
     }
     if (operands.I.rd != 0) {
-        XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-        state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
+        XLEN_t csrValue = state->csrs[csr].Read();
+        state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     }
-    state->csrs[csr]->Write<XLEN_t>(imm_value);
+    state->csrs[csr].Write(imm_value);
 }
 
 inline void print_csrrwi(Operands operands, std::ostream *out) {
@@ -1382,7 +1385,7 @@ constexpr CodePoint inst_csrrwi = {
 // -- csrrsi --
 
 template<typename XLEN_t>
-inline void ex_csrrsi(Operands operands, HartState *state) {
+inline void ex_csrrsi(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     XLEN_t imm_value = operands.I.rs1;
     bool readOnly = RISCV::csrIsReadOnly(csr);
@@ -1391,9 +1394,9 @@ inline void ex_csrrsi(Operands operands, HartState *state) {
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-    state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
-    state->csrs[csr]->Write<XLEN_t>(csrValue | imm_value);
+    XLEN_t csrValue = state->csrs[csr].Read();
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
+    state->csrs[csr].Write(csrValue | imm_value);
 }
 
 inline void print_csrrsi(Operands operands, std::ostream *out) {
@@ -1415,7 +1418,7 @@ constexpr CodePoint inst_csrrsi = {
 // -- csrrci --
 
 template<typename XLEN_t>
-inline void ex_csrrci(Operands operands, HartState *state) {
+inline void ex_csrrci(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     RISCV::CSRAddress csr = (RISCV::CSRAddress)operands.I.imm.u;
     XLEN_t imm_value = operands.I.rs1;
     bool readOnly = RISCV::csrIsReadOnly(csr);
@@ -1424,9 +1427,9 @@ inline void ex_csrrci(Operands operands, HartState *state) {
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr]->Read<XLEN_t>();
-    state->regs[operands.I.rd].Write<XLEN_t>(csrValue);
-    state->csrs[csr]->Write<XLEN_t>(~csrValue & imm_value);
+    XLEN_t csrValue = state->csrs[csr].Read();
+    state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
+    state->csrs[csr].Write(~csrValue & imm_value);
 }
 
 inline void print_csrrci(Operands operands, std::ostream *out) {
@@ -1448,9 +1451,8 @@ constexpr CodePoint inst_csrrci = {
 // -- illegal instruction --
 
 template<typename XLEN_t>
-inline void ex_illegal(Operands operands, HartState *state) {
-    // TODO X need help from the hart w/ either the instruction or a function to know my own encoding
-    state->RaiseException<XLEN_t>(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
+inline void ex_illegal(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, state->currentFetch->encoding);
 }
 
 inline void print_illegal(Operands operands, std::ostream *out) {
@@ -1480,7 +1482,7 @@ constexpr CodePoint reserved4ByteInstruction = {
 // -- unimplemented instruction --
 
 template<typename XLEN_t>
-inline void ex_unimplemented(Operands operands, HartState *state) {
+inline void ex_unimplemented(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     exit(1);
 }
 

@@ -4,58 +4,42 @@
 #include <functional>
 
 #include <RiscV.hpp>
-
-#include <HartSpec.hpp>
-
-#include <Register.hpp>
-#include <HartSpec.hpp>
-
-#include <Swizzle.hpp>
-#include <MMU.hpp>
-
 #include <Operands.hpp>
-#include <Instruction.hpp>
+#include <DecodedInstruction.hpp>
+#include <Swizzle.hpp>
 
+
+template<typename XLEN_t>
 class HartState {
 
 public:
 
-    HartState();
-    void Reset(HartSpec* spec);
-
-    // -- Change Notification Callbacks --
-
-    std::function<void(void)> notifySoftwareChangedSATP;
-    std::function<void(void)> notifySoftwareChangedMSTATUS;
-    std::function<void(void)> notifySoftwareChangedMISA;
-    std::function<void(void)> notifyPrivilegeChanged;
-    std::function<void(void)> notifyInstructionFenceRequested;
-    std::function<void(void)> notifyVMFenceRequested;
-    static void emptyNotifyHandler();
-
-    // -- Operating State --
+    // Broken out into an inner class, and we maintain a pointer to the "current" one, so optimized simulators can
+    // prefetch into a buffer maintained outside this object.
 
     struct Fetch {
         __uint32_t encoding;
-        Instruction instruction;
+        DecodedInstruction<XLEN_t> instruction;
         Operands operands;
-        Register virtualPC;
+        XLEN_t virtualPC;
     };
+
+public:
+
+    // -- Startup state --
+    const __uint32_t maximalExtensions;
+
+    // -- Operating State --
+
     Fetch *currentFetch = nullptr;
-    Register* nextFetchVirtualPC;
-    Register regs[RISCV::NumRegs];
-    RegisterLikeObject *csrs[RISCV::NumCSRs];
+    XLEN_t nextFetchVirtualPC;
+    XLEN_t regs[RISCV::NumRegs];
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;
 
-    MMU* mmu;
-
-    // -- MISA Fields --
+    // -- MISA, MSTATUS, and SATP Fields --
 
     RISCV::XlenMode mxlen;
     __uint32_t extensions;
-
-    // -- MSTATUS Fields --
-
     bool userInterruptsEnabled;
     bool supervisorInterruptsEnabled;
     bool machineInterruptsEnabled;
@@ -75,78 +59,171 @@ public:
     RISCV::XlenMode sxlen;
     RISCV::XlenMode uxlen;
     bool stateDirty;
-
-    // -- SATP Fields --
-
     RISCV::PagingMode pagingMode;
-    Register ppn;
-    Register asid;
+    XLEN_t ppn;
+    XLEN_t asid;
 
-    // -- Memory --
+    // TODO, small bug, MIP MIE MIDELEG MEDELEG are MXLEN bits wide, not XLEN...
 
-    /*
-     * Transact against the attached MMU object. Raise an exception if
-     * appropriate. Return whether the transaction was successful or not. Useful
-     * for instructions to access memory, but prefetching simulators may do
-     * their own transactions directly against the MMU if they like,
-     * for example, to prefetch transactions but defer traps until the simulated
-     * hart actually attempts execution.
-     */
-    template<typename XLEN_t, CASK::AccessType accessType>
-    inline bool Transact(XLEN_t address, XLEN_t size, char* buf) {
-        TransactionResult<XLEN_t> transactionResult =
-            mmu->Transact<XLEN_t, accessType>(address, size, buf);
-        if (transactionResult.trapCause != RISCV::TrapCause::NONE) {
-            RaiseException<XLEN_t>(transactionResult.trapCause, address);
-            return false;
-        }
-        return size == transactionResult.transferredSize;
+    XLEN_t mcause;
+    XLEN_t mepc;
+    XLEN_t mtvec;
+    XLEN_t mtval;
+    XLEN_t mip;
+    XLEN_t mie;
+    XLEN_t mideleg;
+    XLEN_t medeleg;
+
+    XLEN_t scause;
+    XLEN_t sepc;
+    XLEN_t stvec;
+    XLEN_t stval;
+    XLEN_t sip;
+    XLEN_t sie;
+    XLEN_t sideleg;
+    XLEN_t sedeleg;
+
+    XLEN_t ucause;
+    XLEN_t uepc;
+    XLEN_t utvec;
+    XLEN_t utval;
+    XLEN_t uip;
+    XLEN_t uie;
+
+    // -- Change Notification Callbacks --
+
+    // TODO should these be some other object the ex_ functions know about?
+    // that's lots of argument-copying.... but then, bundle + ptr chase them?
+    std::function<void(void)> notifySoftwareChangedSATP;
+    std::function<void(void)> notifySoftwareChangedMSTATUS;
+    std::function<void(void)> notifySoftwareChangedMISA;
+    std::function<void(void)> notifyPrivilegeChanged;
+    std::function<void(void)> notifyInstructionFenceRequested;
+    std::function<void(void)> notifyVMFenceRequested;
+    static void emptyNotifyHandler() {}
+
+    struct CSRAccessors {
+        std::function<XLEN_t(void)> Read;
+        std::function<void(XLEN_t)> Write;
+    };
+    CSRAccessors csrs[RISCV::NumCSRs];
+    
+private:
+
+    XLEN_t csr_scratch[RISCV::NumRegs];
+
+public:
+
+    HartState(__uint32_t allSupportedExtensions)
+        : maximalExtensions(allSupportedExtensions) {
+
+        notifySoftwareChangedMISA = HartState::emptyNotifyHandler;
+        notifySoftwareChangedMSTATUS = HartState::emptyNotifyHandler;
+        notifySoftwareChangedSATP = HartState::emptyNotifyHandler;
+        notifyPrivilegeChanged = HartState::emptyNotifyHandler;
+        notifyInstructionFenceRequested = HartState::emptyNotifyHandler;
+        notifyVMFenceRequested = HartState::emptyNotifyHandler;
+
+        privilegeMode = RISCV::PrivilegeMode::Machine;
+
+        // TODO MHARTID done with a hardcoded/hardwired reg type.
+        // TODO - BUG - SIE and UIE are masked off views of MIE
+
+        // for (RISCV::CSRAddress csr_address = RISCV)
+
+        // TODO some mechanism by which it's assumed that all the other CSRs are simple state? Below will get ugly.
+        csrs[RISCV::CSRAddress::MSTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::Machine>, SetMSTATUS<RISCV::PrivilegeMode::Machine> };
+        csrs[RISCV::CSRAddress::SSTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::Supervisor>, SetMSTATUS<RISCV::PrivilegeMode::Supervisor> };
+        csrs[RISCV::CSRAddress::USTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::User>, SetMSTATUS<RISCV::PrivilegeMode::User> };
+        csrs[RISCV::CSRAddress::MISA] = { GetMISA,  SetMISA };
+        csrs[RISCV::CSRAddress::USTATUS] = { GetSATP,  SetSATP };
+        // csrs[RISCV::CSRAddress::MCAUSE]     = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SCAUSE]     = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UCAUSE]     = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MEPC]       = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SEPC]       = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UEPC]       = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MIE]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SIE]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UIE]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MIP]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SIP]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UIP]        = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MEDELEG]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SEDELEG]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MIDELEG]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SIDELEG]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MTVEC]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::STVEC]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UTVEC]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MTVAL]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::STVAL]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::UTVAL]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MSCRATCH]   = new SimpleCSR();
+        csrs[RISCV::CSRAddress::MSCRATCH]   = {[&]{return csr_scratch[RISCV::CSRAddress::MSCRATCH];}, [&](XLEN_t value){csr_scratch[RISCV::CSRAddress::MSCRATCH] = value;}};
+        // csrs[RISCV::CSRAddress::SSCRATCH]   = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MHARTID]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::MCOUNTEREN] = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::SCOUNTEREN] = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::PMPADDR0]   = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::PMPCFG0]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::TIME]       = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::TIMEH]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::CYCLE]      = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::CYCLEH]     = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::FCSR]       = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::INSTRET]    = new SimpleCSR();
+        // csrs[RISCV::CSRAddress::INSTRETH]   = new SimpleCSR();
+    }
+
+    void Reset(XLEN_t resetVector) {
+        privilegeMode = RISCV::PrivilegeMode::Machine;
+        machineInterruptsEnabled = false;
+        modifyMemoryPrivilege = false;
+        extensions = maximalExtensions;
+        mcause = 0;
+        nextFetchVirtualPC = resetVector;
+        mxlen = RISCV::xlenTypeToMode<XLEN_t>();
     }
 
     // -- Queries --
 
-    RISCV::XlenMode GetXLEN();
-
-    template<typename XLEN_t>
     inline void SetMISA(XLEN_t value) {
         unsigned int shift = (sizeof(XLEN_t)*8)-2;
-        extensions = value & 0x3ffffff;
+        extensions = value & 0x3ffffff & maximalExtensions;
         mxlen = (RISCV::XlenMode)(value >> shift);
         notifySoftwareChangedMISA();
     }
 
-    template<typename XLEN_t>
     inline XLEN_t GetMISA() {
         unsigned int shift = (sizeof(XLEN_t)*8)-2;
         return (((XLEN_t)mxlen) << shift) | extensions;
     }
 
-    template<typename XLEN_t>
     inline XLEN_t GetSATP() {
-        if constexpr (std::is_same<XLEN_t, __uint64_t>() || std::is_same<XLEN_t, __uint128_t>()) {
-            return (((__uint64_t)pagingMode          & 0x0000000000f) << 60)|
-                   ((            asid.Read<XLEN_t>() & 0x0000000ffff) << 44)| 
-                   ((            ppn.Read<XLEN_t>()  & 0xfffffffffff) << 00);
+        if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
+            return ((pagingMode & 0x000001) << 31)|
+                        (( asid & 0x0001ff) << 22)| 
+                        ((  ppn & 0x3fffff) << 00);
         }
-        return ((pagingMode          & 0x000001) << 31)|
-               ((asid.Read<XLEN_t>() & 0x0001ff) << 22)| 
-               ((ppn.Read<XLEN_t>()  & 0x3fffff) << 00);
+        return (((__uint64_t)pagingMode & 0x0000000000f) << 60)|
+                                (( asid & 0x0000000ffff) << 44)| 
+                                ((  ppn & 0xfffffffffff) << 00);
     }
 
-    template<typename XLEN_t>
     inline void SetSATP(XLEN_t value) {
         pagingMode = (RISCV::PagingMode)swizzle<XLEN_t, ExtendBits::Zero, 31, 31>(value);
-        asid.Write<XLEN_t>(swizzle<XLEN_t, ExtendBits::Zero, 30, 22>(value));
-        ppn.Write<XLEN_t>(swizzle<XLEN_t, ExtendBits::Zero, 21, 0>(value));
+        asid = swizzle<XLEN_t, ExtendBits::Zero, 30, 22>(value);
+        ppn = swizzle<XLEN_t, ExtendBits::Zero, 21, 0>(value);
         if constexpr (!std::is_same<XLEN_t, __uint32_t>()) {
             pagingMode = (RISCV::PagingMode)swizzle<XLEN_t, ExtendBits::Zero, 63, 60>(value);
-            asid.Write<XLEN_t>(swizzle<XLEN_t, ExtendBits::Zero, 59, 44>(value));
-            ppn.Write<XLEN_t>(swizzle<XLEN_t, ExtendBits::Zero, 43, 0>(value));
+            asid = swizzle<XLEN_t, ExtendBits::Zero, 59, 44>(value);
+            ppn = swizzle<XLEN_t, ExtendBits::Zero, 43, 0>(value);
         }
         notifySoftwareChangedSATP();
     }
 
-    template <typename XLEN_t, RISCV::PrivilegeMode instructionPrivilege>
+    template <RISCV::PrivilegeMode instructionPrivilege>
     inline XLEN_t GetMSTATUS() {
 
         XLEN_t value = 0;
@@ -185,7 +262,7 @@ public:
         return value;
     }
 
-    template <typename XLEN_t, RISCV::PrivilegeMode instructionPrivilege>
+    template <RISCV::PrivilegeMode instructionPrivilege>
     inline void SetMSTATUS(XLEN_t value) {
 
         userInterruptsEnabled = RISCV::uieMask & value;
@@ -227,8 +304,8 @@ public:
     }
 
     // -- Mutations -- 
+    // These are almost just... instruction code. Huh...
 
-    template<typename XLEN_t>
     inline void RaiseException(RISCV::TrapCause cause, XLEN_t tval) {
 
         if (cause == RISCV::TrapCause::NONE) {
@@ -236,23 +313,11 @@ public:
         }
 
         RISCV::PrivilegeMode targetPrivilege = RISCV::DestinedPrivilegeForCause<XLEN_t>(
-            cause,
-            csrs[RISCV::CSRAddress::MEDELEG]->Get<XLEN_t>(),
-            csrs[RISCV::CSRAddress::SEDELEG]->Get<XLEN_t>(),
-            extensions);
-        TakeTrap<XLEN_t>(cause, targetPrivilege, tval, false);
+            cause, medeleg, sedeleg, extensions);
+        TakeTrap(cause, targetPrivilege, tval, false);
     }
 
-    void ServiceInterrupts();
-
-    template<typename XLEN_t>
     inline void ServiceInterrupts() {
-
-        // TODO, small bug, MIP MIE MIDELEG MEDELEG are MXLEN bits wide, not XLEN...
-        XLEN_t mip = csrs[RISCV::CSRAddress::MIP]->Get<XLEN_t>();
-        XLEN_t mie = csrs[RISCV::CSRAddress::MIE]->Get<XLEN_t>();
-        XLEN_t mideleg = csrs[RISCV::CSRAddress::MIDELEG]->Get<XLEN_t>();
-        XLEN_t sideleg = csrs[RISCV::CSRAddress::SIDELEG]->Get<XLEN_t>();
         
         XLEN_t interruptsForM = 0;
         XLEN_t interruptsForS = 0;
@@ -267,8 +332,7 @@ public:
             // Figure out the destined privilege level for the interrupt
             RISCV::PrivilegeMode destinedPrivilege =
                 RISCV::DestinedPrivilegeForCause<XLEN_t>(
-                    (RISCV::TrapCause)bit,
-                    mideleg, sideleg, extensions);
+                    (RISCV::TrapCause)bit, mideleg, sideleg, extensions);
 
             // Set the interrupt's bit in the correct mask for its privilege
             if (destinedPrivilege == RISCV::PrivilegeMode::Machine) {
@@ -300,7 +364,6 @@ public:
         TakeTrap(cause, targetPrivilege, 0, true);
     }
 
-    template<typename XLEN_t>
     inline void TakeTrap(RISCV::TrapCause cause, RISCV::PrivilegeMode targetPrivilege, XLEN_t tval, bool isInterrupt) {
 
         if (targetPrivilege < privilegeMode) {
@@ -308,23 +371,25 @@ public:
         }
 
         RISCV::TrapCSRs trapToCSRs = RISCV::trapCSRsForPrivilege[targetPrivilege];
+
         XLEN_t mcauseInterruptBit = 1 << ((__uint32_t)mxlen-1);
+
+        // TODO this is the next fight...
 
         // When a trap is delegated to a less-privileged mode x, the xcause
         // register is written with the trap cause,
+        xcause = cause;
         if (isInterrupt) {
-            csrs[trapToCSRs.cause]->Set<XLEN_t>(cause | mcauseInterruptBit);
-        } else {
-            csrs[trapToCSRs.cause]->Set<XLEN_t>(cause);
+            xcause |= mcauseInterruptBit;
         }
 
         // ...the xepc register is written with the virtual address of the
         // instruction that took the trap,
-        csrs[trapToCSRs.epc]->Set<XLEN_t>(currentFetch->virtualPC.Read<XLEN_t>());
+        xepc = currentFetch->virtualPC;
 
         // ...the xtval register is written with an exception-specific datum,
         if (!isInterrupt) {
-            csrs[trapToCSRs.tval]->Set<XLEN_t>(tval);
+            xtval = tval;
         }
 
         // ...the xPP field of mstatus is written with the active privilege mode
@@ -356,28 +421,23 @@ public:
             break;
         }
 
-        // Read the CSRs needed to get a destination
-        XLEN_t tvec_value = csrs[trapToCSRs.tvec]->Get<XLEN_t>();
-        XLEN_t tvec_base = tvec_value & RISCV::tvecBaseMask;
-        RISCV::tvecMode tvec_mode = (RISCV::tvecMode)(tvec_value & RISCV::tvecModeMask);
-        XLEN_t tcause_value = csrs[trapToCSRs.cause]->Get<XLEN_t>();
-
         // Calculate the destination
-        XLEN_t trap_destination = tvec_base;
+        RISCV::tvecMode tvec_mode = (RISCV::tvecMode)(xtvec & RISCV::tvecModeMask);
+        XLEN_t trap_destination = xtvec & RISCV::tvecBaseMask;
         if (tvec_mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-            trap_destination += 4*tcause_value;
+            trap_destination += 4*xcause;
         }
 
         // Actually take the trap.
         privilegeMode = targetPrivilege;
         notifyPrivilegeChanged();
-        nextFetchVirtualPC->Write<XLEN_t>(trap_destination);
+        nextFetchVirtualPC = trap_destination;
     }
 
-    template<typename XLEN_t, RISCV::PrivilegeMode trapPrivilege>
+    template<RISCV::PrivilegeMode trapPrivilege>
     inline void ReturnFromTrap() {
 
-        // TODO verify this logic
+        // TODO verify the below logic against the following spec snippet:
         // To return after handling a trap, there are separate trap return instructions per privilege level: MRET, SRET,
         // and URET. MRET is always provided. SRET must be provided if supervisor mode is supported, and should raise an
         // illegal instruction exception otherwise. SRET should also raise an illegal instruction exception when TSR=1
@@ -396,7 +456,7 @@ public:
             } else {
                 machinePreviousPrivilege = RISCV::PrivilegeMode::Machine;
             }
-            nextFetchVirtualPC->Write<XLEN_t>(csrs[RISCV::CSRAddress::MEPC]->Get<XLEN_t>());
+            nextFetchVirtualPC = mepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::Supervisor) {
             supervisorInterruptsEnabled = supervisorPreviousInterruptsEnabled;
             privilegeMode = supervisorPreviousPrivilege;
@@ -406,15 +466,16 @@ public:
             } else {
                 supervisorPreviousPrivilege = RISCV::PrivilegeMode::Machine;
             }
-            nextFetchVirtualPC->Write<XLEN_t>(csrs[RISCV::CSRAddress::SEPC]->Get<XLEN_t>());
+            nextFetchVirtualPC = sepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::User) {
             userInterruptsEnabled = userPreviousInterruptsEnabled;
             userPreviousInterruptsEnabled = true;
-            nextFetchVirtualPC->Write<XLEN_t>(csrs[RISCV::CSRAddress::UEPC]->Get<XLEN_t>());
+            nextFetchVirtualPC = uepc;
         } else {
             // fatal("Return from nonsense-privilege-mode trap"); // TODO
         }
 
         notifyPrivilegeChanged();
     }
+
 };

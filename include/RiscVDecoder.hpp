@@ -417,27 +417,3 @@ constexpr CodePoint decode_instruction(__uint32_t inst, __uint32_t extensionsVec
     default: return illegal4ByteInstruction;
     }
 }
-
-constexpr Instruction decode_full(__uint32_t inst, __uint32_t extensionsVector, RISCV::XlenMode mxlen, RISCV::XlenMode currentXlen) {
-    CodePoint decoded = decode_instruction(inst, extensionsVector, mxlen);
-    Instruction exact = {};
-    exact.disassemble = decoded.disassemble;
-    exact.getOperands = decoded.getOperands;
-    exact.width = decoded.width;
-    switch (currentXlen) {
-    case RISCV::XlenMode::XL32:
-        exact.execute = decoded.execute32;
-        break;
-    case RISCV::XlenMode::XL64:
-        exact.execute = decoded.execute64;
-        break;
-    case RISCV::XlenMode::XL128:
-        exact.execute = decoded.execute128;
-        break;
-    case RISCV::XlenMode::None:
-        break;
-    default:
-        break;
-    }
-    return exact;
-}

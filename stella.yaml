@@ -1,11 +1,8 @@
 name: HartKit
 apps: []
-build-static-lib: true
-build-shared-lib: true
+build-static-lib: false
+build-shared-lib: false
 dependencies:
-    - name: CASK
-      url: https://github.com/NotThatJonSmith/CASK.git
-      checkout: main
     - name: RISCV-Knowledge
       url: https://github.com/NotThatJonSmith/RISCV-Knowledge.git
       checkout: main
@@ -16,5 +13,4 @@ private-header-paths:
     - src/include
 public-header-paths:
     - include/
-source-globs:
-    - src/*
+source-globs: []
