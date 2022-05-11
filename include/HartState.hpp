@@ -63,7 +63,7 @@ public:
     XLEN_t ppn;
     XLEN_t asid;
 
-    // TODO, small bug, MIP MIE MIDELEG MEDELEG are MXLEN bits wide, not XLEN...
+    // TODO, bug, MIP MIE MIDELEG MEDELEG are MXLEN bits wide, not XLEN...
 
     XLEN_t mcause;
     XLEN_t mepc;
@@ -132,11 +132,27 @@ public:
         // for (RISCV::CSRAddress csr_address = RISCV)
 
         // TODO some mechanism by which it's assumed that all the other CSRs are simple state? Below will get ugly.
-        csrs[RISCV::CSRAddress::MSTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::Machine>, SetMSTATUS<RISCV::PrivilegeMode::Machine> };
-        csrs[RISCV::CSRAddress::SSTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::Supervisor>, SetMSTATUS<RISCV::PrivilegeMode::Supervisor> };
-        csrs[RISCV::CSRAddress::USTATUS] = { GetMSTATUS<RISCV::PrivilegeMode::User>, SetMSTATUS<RISCV::PrivilegeMode::User> };
-        csrs[RISCV::CSRAddress::MISA] = { GetMISA,  SetMISA };
-        csrs[RISCV::CSRAddress::USTATUS] = { GetSATP,  SetSATP };
+        csrs[RISCV::CSRAddress::MSTATUS] = {
+            std::bind(&HartState::GetMSTATUS<RISCV::PrivilegeMode::Machine>, this),
+            std::bind(&HartState::SetMSTATUS<RISCV::PrivilegeMode::Machine>, this, std::placeholders::_1)
+        };
+
+        csrs[RISCV::CSRAddress::SSTATUS] = {
+            std::bind(&HartState::GetMSTATUS<RISCV::PrivilegeMode::Supervisor>, this),
+            std::bind(&HartState::SetMSTATUS<RISCV::PrivilegeMode::Supervisor>, this, std::placeholders::_1)
+        };
+        csrs[RISCV::CSRAddress::USTATUS] = {
+            std::bind(&HartState::GetMSTATUS<RISCV::PrivilegeMode::User>, this),
+            std::bind(&HartState::SetMSTATUS<RISCV::PrivilegeMode::User>, this, std::placeholders::_1)
+        };
+        csrs[RISCV::CSRAddress::MISA] = {
+            std::bind(&HartState::GetMISA, this),
+            std::bind(&HartState::SetMISA, this, std::placeholders::_1)
+        };
+        csrs[RISCV::CSRAddress::SATP] = {
+            std::bind(&HartState::GetSATP, this),
+            std::bind(&HartState::SetSATP, this, std::placeholders::_1)
+        };
         // csrs[RISCV::CSRAddress::MCAUSE]     = new SimpleCSR();
         // csrs[RISCV::CSRAddress::SCAUSE]     = new SimpleCSR();
         // csrs[RISCV::CSRAddress::UCAUSE]     = new SimpleCSR();
@@ -160,7 +176,7 @@ public:
         // csrs[RISCV::CSRAddress::STVAL]      = new SimpleCSR();
         // csrs[RISCV::CSRAddress::UTVAL]      = new SimpleCSR();
         // csrs[RISCV::CSRAddress::MSCRATCH]   = new SimpleCSR();
-        csrs[RISCV::CSRAddress::MSCRATCH]   = {[&]{return csr_scratch[RISCV::CSRAddress::MSCRATCH];}, [&](XLEN_t value){csr_scratch[RISCV::CSRAddress::MSCRATCH] = value;}};
+        // csrs[RISCV::CSRAddress::MSCRATCH]   = {[&]{return csr_scratch[RISCV::CSRAddress::MSCRATCH];}, [&](XLEN_t value){csr_scratch[RISCV::CSRAddress::MSCRATCH] = value;}};
         // csrs[RISCV::CSRAddress::SSCRATCH]   = new SimpleCSR();
         // csrs[RISCV::CSRAddress::MHARTID]    = new SimpleCSR();
         // csrs[RISCV::CSRAddress::MCOUNTEREN] = new SimpleCSR();
@@ -304,7 +320,6 @@ public:
     }
 
     // -- Mutations -- 
-    // These are almost just... instruction code. Huh...
 
     inline void RaiseException(RISCV::TrapCause cause, XLEN_t tval) {
 
@@ -370,62 +385,96 @@ public:
             targetPrivilege = privilegeMode;
         }
 
-        RISCV::TrapCSRs trapToCSRs = RISCV::trapCSRsForPrivilege[targetPrivilege];
+        XLEN_t interruptBit = 1 << ((__uint32_t)mxlen-1);
 
-        XLEN_t mcauseInterruptBit = 1 << ((__uint32_t)mxlen-1);
+        // When a trap is delegated to a less-privileged mode x:
+        // the xcause register is written with the trap cause,
+        // the xepc register is written with the virtual address of the
+        //     instruction that took the trap,
+        // the xtval register is written with an exception-specific datum,
+        // the xPP field of mstatus is written with the active privilege mode
+        //     at the time of the trap,
+        // the xPIE field of mstatus is written with the value of the xIE field
+        //     at the time of the trap, and
+        // the xIE field of mstatus is cleared.
 
-        // TODO this is the next fight...
+        XLEN_t trap_destination;
+        RISCV::tvecMode tvec_mode;
 
-        // When a trap is delegated to a less-privileged mode x, the xcause
-        // register is written with the trap cause,
-        xcause = cause;
-        if (isInterrupt) {
-            xcause |= mcauseInterruptBit;
-        }
-
-        // ...the xepc register is written with the virtual address of the
-        // instruction that took the trap,
-        xepc = currentFetch->virtualPC;
-
-        // ...the xtval register is written with an exception-specific datum,
-        if (!isInterrupt) {
-            xtval = tval;
-        }
-
-        // ...the xPP field of mstatus is written with the active privilege mode
-        // at the time of the trap,
-        if (targetPrivilege == RISCV::PrivilegeMode::Machine) {
-            machinePreviousPrivilege = privilegeMode;
-        } else if (targetPrivilege == RISCV::PrivilegeMode::Supervisor) {
-            supervisorPreviousPrivilege = privilegeMode;
-        } // else - destined for U mode, and UPP is implicitly always 0.
-
-        // ...the xPIE field of mstatus is written with the value of the xIE
-        // field at the time of the trap, and the xIE field of mstatus is
-        // cleared.
         switch (targetPrivilege) {
         case RISCV::PrivilegeMode::Machine:
+
+            mcause = cause;
+            if (isInterrupt) {
+                mcause |= interruptBit;
+            }
+            mepc = currentFetch->virtualPC;
+            if (!isInterrupt) {
+                mtval = tval;
+            }
+            machinePreviousPrivilege = privilegeMode;
             machinePreviousInterruptsEnabled = machineInterruptsEnabled;
             machineInterruptsEnabled = false;
+
+            // Calculate the destination
+            tvec_mode = (RISCV::tvecMode)(mtvec & RISCV::tvecModeMask);
+            trap_destination = mtvec & RISCV::tvecBaseMask;
+            if (tvec_mode == RISCV::tvecMode::Vectored && !isInterrupt) {
+                trap_destination += 4*mcause;
+            }
+
             break;
+
         case RISCV::PrivilegeMode::Supervisor:
+
+            scause = cause;
+            if (isInterrupt) {
+                scause |= interruptBit;
+            }
+            sepc = currentFetch->virtualPC;
+            if (!isInterrupt) {
+                stval = tval;
+            }
+            supervisorPreviousPrivilege = privilegeMode;
             supervisorPreviousInterruptsEnabled = supervisorInterruptsEnabled;
             supervisorInterruptsEnabled = false;
+
+            // Calculate the destination
+            tvec_mode = (RISCV::tvecMode)(stvec & RISCV::tvecModeMask);
+            trap_destination = stvec & RISCV::tvecBaseMask;
+            if (tvec_mode == RISCV::tvecMode::Vectored && !isInterrupt) {
+                trap_destination += 4*scause;
+            }
+
             break;
+
         case RISCV::PrivilegeMode::User:
+
+            ucause = cause;
+            if (isInterrupt) {
+                ucause |= interruptBit;
+            }
+            uepc = currentFetch->virtualPC;
+            if (!isInterrupt) {
+                utval = tval;
+            }
             userPreviousInterruptsEnabled = userInterruptsEnabled;
             userInterruptsEnabled = false;
+
+            // Calculate the destination
+            tvec_mode = (RISCV::tvecMode)(utvec & RISCV::tvecModeMask);
+            trap_destination = utvec & RISCV::tvecBaseMask;
+            if (tvec_mode == RISCV::tvecMode::Vectored && !isInterrupt) {
+                trap_destination += 4*ucause;
+            }
+
             break;
+
         default:
             // fatal("Trap destined for nonsense privilege mode."); // TODO
+            trap_destination = 0;
+            tvec_mode = RISCV::tvecMode::Vectored;
             break;
-        }
-
-        // Calculate the destination
-        RISCV::tvecMode tvec_mode = (RISCV::tvecMode)(xtvec & RISCV::tvecModeMask);
-        XLEN_t trap_destination = xtvec & RISCV::tvecBaseMask;
-        if (tvec_mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-            trap_destination += 4*xcause;
         }
 
         // Actually take the trap.

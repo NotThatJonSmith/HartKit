@@ -33,7 +33,7 @@ inline void ex_uret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<RISCV::PrivilegeMode::User>();
+    state->template ReturnFromTrap<RISCV::PrivilegeMode::User>();
 }
 
 inline void print_uret(Operands operands, std::ostream *out) {
@@ -60,7 +60,7 @@ inline void ex_sret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<RISCV::PrivilegeMode::Supervisor>();
+    state->template ReturnFromTrap<RISCV::PrivilegeMode::Supervisor>();
 }
 
 inline void print_sret(Operands operands, std::ostream *out) {
@@ -84,7 +84,7 @@ inline void ex_mret(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0); // TODO access to my encoding...
         return;
     }
-    state->ReturnFromTrap<RISCV::PrivilegeMode::Machine>();
+    state->template ReturnFromTrap<RISCV::PrivilegeMode::Machine>();
 }
 
 inline void print_mret(Operands operands, std::ostream *out) {
