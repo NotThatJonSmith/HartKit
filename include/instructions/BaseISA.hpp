@@ -1255,10 +1255,10 @@ inline void ex_csrrw(Operands operands, HartState<XLEN_t> *state, Transactor<XLE
         return;
     }
     if (operands.I.rd != 0) {
-        XLEN_t csrValue = state->csrs[csr].Read();
+        XLEN_t csrValue = state->ReadCSR(csr);
         state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     }
-    state->csrs[csr].Write(regVal);
+    state->WriteCSR(csr, regVal);
 }
 
 inline void print_csrrw(Operands operands, std::ostream *out) {
@@ -1289,10 +1289,10 @@ inline void ex_csrrs(Operands operands, HartState<XLEN_t> *state, Transactor<XLE
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr].Read();
+    XLEN_t csrValue = state->ReadCSR(csr);
     state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     if (operands.I.rs1 != 0) {
-        state->csrs[csr].Write(csrValue | regVal);
+        state->WriteCSR(csr, csrValue | regVal);
     }
 }
 
@@ -1324,10 +1324,10 @@ inline void ex_csrrc(Operands operands, HartState<XLEN_t> *state, Transactor<XLE
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr].Read();
+    XLEN_t csrValue = state->ReadCSR(csr);
     state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     if (operands.I.rs1 != 0) {
-        state->csrs[csr].Write(~csrValue & regVal);
+        state->WriteCSR(csr, ~csrValue & regVal);
     }
 }
 
@@ -1360,10 +1360,10 @@ inline void ex_csrrwi(Operands operands, HartState<XLEN_t> *state, Transactor<XL
         return;
     }
     if (operands.I.rd != 0) {
-        XLEN_t csrValue = state->csrs[csr].Read();
+        XLEN_t csrValue = state->ReadCSR(csr);
         state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
     }
-    state->csrs[csr].Write(imm_value);
+    state->WriteCSR(csr, imm_value);
 }
 
 inline void print_csrrwi(Operands operands, std::ostream *out) {
@@ -1394,9 +1394,9 @@ inline void ex_csrrsi(Operands operands, HartState<XLEN_t> *state, Transactor<XL
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr].Read();
+    XLEN_t csrValue = state->ReadCSR(csr);
     state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
-    state->csrs[csr].Write(csrValue | imm_value);
+    state->WriteCSR(csr, csrValue | imm_value);
 }
 
 inline void print_csrrsi(Operands operands, std::ostream *out) {
@@ -1427,9 +1427,9 @@ inline void ex_csrrci(Operands operands, HartState<XLEN_t> *state, Transactor<XL
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
-    XLEN_t csrValue = state->csrs[csr].Read();
+    XLEN_t csrValue = state->ReadCSR(csr);
     state->regs[operands.I.rd] = operands.I.rd != 0 ? csrValue : 0;
-    state->csrs[csr].Write(~csrValue & imm_value);
+    state->WriteCSR(csr, ~csrValue & imm_value);
 }
 
 inline void print_csrrci(Operands operands, std::ostream *out) {
