@@ -1063,7 +1063,11 @@ inline void ex_sb(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t
     XLEN_t write_addr = rs1_value + imm_value;
     __uint8_t write_value = rs2_value & (XLEN_t)0xff;
     XLEN_t write_size = sizeof(write_value);
-    mem->Write(write_addr, write_size, (char*)&write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
 }
 
 inline void print_sb(Operands operands, std::ostream *out) {
@@ -1093,7 +1097,11 @@ inline void ex_sh(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t
     XLEN_t write_addr = rs1_value + imm_value;
     __uint16_t write_value = rs2_value & (XLEN_t)0xffff;
     XLEN_t write_size = sizeof(write_value);
-    mem->Write(write_addr, write_size, (char*)&write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
 }
 
 inline void print_sh(Operands operands, std::ostream *out) {
@@ -1123,7 +1131,11 @@ inline void ex_sw(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t
     XLEN_t write_addr = rs1_value + imm_value;
     __uint32_t write_value = rs2_value & (XLEN_t)0xffffffff;
     XLEN_t write_size = sizeof(write_value);
-    mem->Write(write_addr, write_size, (char*)&write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
 }
 
 inline void print_sw(Operands operands, std::ostream *out) {

@@ -258,6 +258,13 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
     XLEN_t virt_valid_through = virt_addr | (pagesize - 1);
     // TODO this is inefficient for superpages because it only uses the size of regular pages.
 
+    // std::cout << "Translated 0x"
+    //           << std::hex << std::setfill('0') << std::setw(8)
+    //           << (__uint32_t)virt_addr
+    //           << " as 0x"
+    //           << std::hex << std::setfill('0') << std::setw(8)
+    //           << (__uint32_t)phys_addr
+    //           << std::endl;
     return { virt_addr, phys_addr, virt_valid_through, RISCV::TrapCause::NONE };
 
 }
