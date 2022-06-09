@@ -104,7 +104,8 @@ constexpr CodePoint inst_mret = {
 
 template<typename XLEN_t>
 inline void ex_sfencevma(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    state->notifyVMFenceRequested();
+    state->implCallback(HartCallbackArgument::RequestedVMfence);
+
 }
 
 inline void print_sfencevma(Operands operands, std::ostream *out) {

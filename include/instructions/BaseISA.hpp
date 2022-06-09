@@ -1183,7 +1183,7 @@ inline Operands no_operands_from(__uint32_t inst) {
 
 template<typename XLEN_t>
 inline void ex_fencei(Operands operands, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    state->notifyInstructionFenceRequested();
+    state->implCallback(HartCallbackArgument::RequestedIfence);
 }
 
 inline void print_fencei(Operands operands, std::ostream *out) {

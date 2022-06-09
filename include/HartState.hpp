@@ -9,6 +9,15 @@
 #include <Swizzle.hpp>
 
 
+enum class HartCallbackArgument {
+    ChangedPrivilege,
+    ChangedMISA,
+    ChangedMSTATUS,
+    ChangedSATP,
+    RequestedIfence,
+    RequestedVMfence
+};
+
 template<typename XLEN_t>
 class HartState {
 
@@ -33,7 +42,6 @@ public:
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;
     RISCV::misaReg misa;
     RISCV::mstatusReg mstatus;
-
     RISCV::interruptReg mie, mip;
     RISCV::causeReg<XLEN_t> mcause, scause, ucause;
     RISCV::tvecReg<XLEN_t> mtvec, stvec, utvec;
@@ -44,33 +52,23 @@ public:
 
     RISCV::satpReg<XLEN_t> satp;
     RISCV::fcsrReg fcsr;
-    __uint64_t counters[32];
-    __uint32_t mcounteren;
-    __uint32_t scounteren;
-    __uint32_t mcountinhibit;
-    XLEN_t hpmevents[32];
-    RISCV::pmpEntry pmpentry[16];
+    // TODO when enabling these, move them out!
+    // __uint64_t counters[32];
+    // __uint32_t mcounteren;
+    // __uint32_t scounteren;
+    // __uint32_t mcountinhibit;
+    // XLEN_t hpmevents[32];
+    // RISCV::pmpEntry pmpentry[16];
 
-    // -- Change Notification Callbacks --
-    // TODO should these be some other object the ex_ functions know about?
+    // TODO should this just be something the ex_ functions know about?
     // that's lots of argument-copying.... but then, bundle + ptr chase them?
-    std::function<void(void)> notifySoftwareChangedSATP;
-    std::function<void(void)> notifySoftwareChangedMSTATUS;
-    std::function<void(void)> notifySoftwareChangedMISA;
-    std::function<void(void)> notifyPrivilegeChanged;
-    std::function<void(void)> notifyInstructionFenceRequested;
-    std::function<void(void)> notifyVMFenceRequested;
-    // TODO used to trigger prefetch flushes on the pc write, but now need a notifier
-    void emptyNotifyHandler() { return; }
+    // but, not a lot of opportunity to "know" what changes outside this object
+    std::function<void(HartCallbackArgument)> implCallback;
+    void emptyCallback(HartCallbackArgument arg) { return; }
 
     HartState(__uint32_t allSupportedExtensions)
         : maximalExtensions(allSupportedExtensions) {
-        notifySoftwareChangedMISA = std::bind(&HartState::emptyNotifyHandler, this);
-        notifySoftwareChangedMSTATUS = std::bind(&HartState::emptyNotifyHandler, this);
-        notifySoftwareChangedSATP = std::bind(&HartState::emptyNotifyHandler, this);
-        notifyPrivilegeChanged = std::bind(&HartState::emptyNotifyHandler, this);
-        notifyInstructionFenceRequested = std::bind(&HartState::emptyNotifyHandler, this);
-        notifyVMFenceRequested = std::bind(&HartState::emptyNotifyHandler, this);
+        implCallback = std::bind(&HartState::emptyCallback, this, std::placeholders::_1);
         privilegeMode = RISCV::PrivilegeMode::Machine;
     }
 
@@ -92,7 +90,7 @@ public:
             unsigned int shift = (sizeof(XLEN_t)*8)-2;
             misa.extensions = *value & 0x3ffffff & maximalExtensions;
             misa.mxlen = (RISCV::XlenMode)(*value >> shift);
-            notifySoftwareChangedMISA();
+            implCallback(HartCallbackArgument::ChangedMISA);
         } else {
             unsigned int shift = (sizeof(XLEN_t)*8)-2;
             *value = (((XLEN_t)misa.mxlen) << shift) | misa.extensions;
@@ -110,7 +108,7 @@ public:
                 satp.asid = swizzle<XLEN_t, ExtendBits::Zero, 59, 44>(*value);
                 satp.ppn = swizzle<XLEN_t, ExtendBits::Zero, 43, 0>(*value);
             }
-            notifySoftwareChangedSATP();
+            implCallback(HartCallbackArgument::ChangedSATP);
         } else {
             if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
                 *value = ((satp.pagingMode & 0x000001) << 31)|
@@ -159,7 +157,7 @@ public:
                 mstatus.tw = RISCV::twMask & *value;
                 mstatus.tsr = RISCV::tsrMask & *value;
             }
-            notifySoftwareChangedMSTATUS();
+            implCallback(HartCallbackArgument::ChangedMSTATUS);
         } else {
             *value = 0;
             *value |= mstatus.uie ? RISCV::uieMask : 0;
@@ -298,51 +296,6 @@ public:
             *value = 0;
         }
 
-        if (csrAddress >= RISCV::CSRAddress::MCYCLE &&
-            csrAddress <= RISCV::CSRAddress::MHPMCOUNTER31) {
-            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLE;
-            // TODO XLEN truncation
-            // TODO MTIME carveout
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::MCYCLEH &&
-            csrAddress <= RISCV::CSRAddress::MHPMCOUNTER31H) {
-            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLEH;
-            // TODO shifting
-            // TODO MTIME carveout
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::CYCLE &&
-            csrAddress <= RISCV::CSRAddress::HPMCOUNTER31) {
-            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLE;
-            // TODO XLEN truncation
-            // TODO counter passthrough
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::CYCLEH &&
-            csrAddress <= RISCV::CSRAddress::HPMCOUNTER31H) {
-            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLEH;
-            // TODO shifting
-            // TODO counter passthrough
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::MHPMEVENT3 &&
-            csrAddress <= RISCV::CSRAddress::MHPMEVENT31) {
-            // unsigned int counterID = csrAddress - RISCV::CSRAddress::MHPMEVENT3 + 3;
-            // TODO events
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::PMPADDR0 &&
-            csrAddress <= RISCV::CSRAddress::PMPADDR15) {
-            // unsigned int pmpEntryID = csrAddress - RISCV::CSRAddress::PMPADDR0;
-            // TODO pmp address
-        }
-
-        if (csrAddress >= RISCV::CSRAddress::PMPCFG0 &&
-            csrAddress <= RISCV::CSRAddress::PMPCFG3) {
-            // TODO four pmp entries at once
-        }
-
         switch (csrAddress) {
             case RISCV::CSRAddress::MISA: MISA<Writing>(value); break;
             case RISCV::CSRAddress::SATP: SATP<Writing>(value); break;
@@ -418,7 +371,57 @@ public:
             case RISCV::CSRAddress::INVALID_CSR:
                 break;
             default:
+                BankedCSR<Writing>(csrAddress, value);
                 break;
+        }
+        // TODO error here
+    }
+    
+    template<bool Writing>
+    inline void BankedCSR(RISCV::CSRAddress csrAddress, XLEN_t* value) {
+        if (csrAddress >= RISCV::CSRAddress::MCYCLE &&
+            csrAddress <= RISCV::CSRAddress::MHPMCOUNTER31) {
+            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLE;
+            // TODO XLEN truncation
+            // TODO MTIME carveout
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::MCYCLEH &&
+            csrAddress <= RISCV::CSRAddress::MHPMCOUNTER31H) {
+            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLEH;
+            // TODO shifting
+            // TODO MTIME carveout
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::CYCLE &&
+            csrAddress <= RISCV::CSRAddress::HPMCOUNTER31) {
+            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLE;
+            // TODO XLEN truncation
+            // TODO counter passthrough
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::CYCLEH &&
+            csrAddress <= RISCV::CSRAddress::HPMCOUNTER31H) {
+            // unsigned int counterID = csrAddress - RISCV::CSRAddress::CYCLEH;
+            // TODO shifting
+            // TODO counter passthrough
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::MHPMEVENT3 &&
+            csrAddress <= RISCV::CSRAddress::MHPMEVENT31) {
+            // unsigned int counterID = csrAddress - RISCV::CSRAddress::MHPMEVENT3 + 3;
+            // TODO events
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::PMPADDR0 &&
+            csrAddress <= RISCV::CSRAddress::PMPADDR15) {
+            // unsigned int pmpEntryID = csrAddress - RISCV::CSRAddress::PMPADDR0;
+            // TODO pmp address
+        }
+
+        if (csrAddress >= RISCV::CSRAddress::PMPCFG0 &&
+            csrAddress <= RISCV::CSRAddress::PMPCFG3) {
+            // TODO four pmp entries at once
         }
     }
 
@@ -499,7 +502,6 @@ public:
         TakeTrap<true>(cause, targetPrivilege, 0);
     }
 
-    // TODO: isInterrupt can be a template parameter
     template<bool isInterrupt>
     inline void TakeTrap(RISCV::TrapCause cause, RISCV::PrivilegeMode targetPrivilege, XLEN_t tval) {
 
@@ -533,7 +535,6 @@ public:
             mstatus.mpie = mstatus.mie;
             mstatus.mie = false;
             privilegeMode = targetPrivilege;
-            // notifyPrivilegeChanged();
             nextFetchVirtualPC = mtvec.base;
             if (mtvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*mcause.exceptionCode;
@@ -548,7 +549,6 @@ public:
             mstatus.spie = mstatus.sie;
             mstatus.sie = false;
             privilegeMode = targetPrivilege;
-            // notifyPrivilegeChanged();
             nextFetchVirtualPC = stvec.base;
             if (stvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*scause.exceptionCode;
@@ -562,7 +562,6 @@ public:
             mstatus.upie = mstatus.uie;
             mstatus.uie = false;
             privilegeMode = targetPrivilege;
-            // notifyPrivilegeChanged();
             nextFetchVirtualPC = utvec.base;
             if (utvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*ucause.exceptionCode;
@@ -572,6 +571,7 @@ public:
             // fatal("Trap destined for nonsense privilege mode."); // TODO
             break;
         }
+        implCallback(HartCallbackArgument::ChangedPrivilege);
     }
 
     template<RISCV::PrivilegeMode trapPrivilege>
@@ -615,7 +615,7 @@ public:
             // fatal("Return from nonsense-privilege-mode trap"); // TODO
         }
 
-        notifyPrivilegeChanged();
+        implCallback(HartCallbackArgument::ChangedPrivilege);
     }
 
 };
