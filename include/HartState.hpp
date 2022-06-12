@@ -18,6 +18,7 @@ enum class HartCallbackArgument {
     RequestedVMfence
 };
 
+
 template<typename XLEN_t>
 class HartState {
 
@@ -38,6 +39,8 @@ public:
     Fetch *currentFetch = nullptr;
     XLEN_t nextFetchVirtualPC;
 
+    // TODO, an experiment with actually good scientific stats comparing packed
+    // bits vs. broken out fields for these registers.
     XLEN_t regs[RISCV::NumRegs];
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;
     RISCV::misaReg misa;
@@ -48,10 +51,10 @@ public:
     XLEN_t mepc, sepc, uepc;
     XLEN_t mtval, stval, utval;
     XLEN_t mscratch, sscratch, uscratch;
-    XLEN_t mideleg, medeleg, sideleg, sedeleg;
-
+    XLEN_t mideleg, medeleg, sideleg, sedeleg; // TODO are these "interruptReg"?
     RISCV::satpReg<XLEN_t> satp;
     RISCV::fcsrReg fcsr;
+
     // TODO when enabling these, move them out!
     // __uint64_t counters[32];
     // __uint32_t mcounteren;
@@ -72,16 +75,100 @@ public:
         privilegeMode = RISCV::PrivilegeMode::Machine;
     }
 
+    // TODO refactor with register clear functions for the important CSRs
     void Reset(XLEN_t resetVector) {
+
+        nextFetchVirtualPC = resetVector;
+
+        for (unsigned int i = 0; i < RISCV::NumRegs; i++) {
+            regs[i] = (XLEN_t)0;
+        }
+
         privilegeMode = RISCV::PrivilegeMode::Machine;
-        mstatus.mie = false;
-        mstatus.mprv = false;
+
         misa.extensions = maximalExtensions;
+        misa.mxlen = RISCV::xlenTypeToMode<XLEN_t>();
+
+        mstatus.mie = false;
+        mstatus.sie = false;
+        mstatus.uie = false;
+        mstatus.mpie = false;
+        mstatus.spie = false;
+        mstatus.upie = false;
+        mstatus.mprv = false;
+        mstatus.mpp = RISCV::PrivilegeMode::Machine;
+        mstatus.spp = RISCV::PrivilegeMode::Machine;
+        mstatus.fs = RISCV::FloatingPointState::Off;
+        mstatus.xs = RISCV::ExtensionState::AllOff;
+        mstatus.mprv = false;
+        mstatus.sum = false;
+        mstatus.mxr = false;
+        mstatus.tvm = false;
+        mstatus.tw = false;
+        mstatus.tsr = false;
+        mstatus.sxl = RISCV::xlenTypeToMode<XLEN_t>();
+        mstatus.uxl = RISCV::xlenTypeToMode<XLEN_t>();
+        mstatus.sd = false;
+
+        mie.usi = false;
+        mie.ssi = false;
+        mie.msi = false;
+        mie.uti = false;
+        mie.sti = false;
+        mie.mti = false;
+        mie.uei = false;
+        mie.sei = false;
+        mie.mei = false;
+
+        mip.usi = false;
+        mip.ssi = false;
+        mip.msi = false;
+        mip.uti = false;
+        mip.sti = false;
+        mip.mti = false;
+        mip.uei = false;
+        mip.sei = false;
+        mip.mei = false;
+
         mcause.exceptionCode = RISCV::TrapCause::NONE;
         mcause.interrupt = false;
-        nextFetchVirtualPC = resetVector;
-        misa.mxlen = RISCV::xlenTypeToMode<XLEN_t>();
-        // TODO much much more thorough reset behaviors
+        scause.exceptionCode = RISCV::TrapCause::NONE;
+        scause.interrupt = false;
+        ucause.exceptionCode = RISCV::TrapCause::NONE;
+        ucause.interrupt = false;
+
+        mtvec.base = 0;
+        mtvec.mode = RISCV::tvecMode::Direct;
+        stvec.base = 0;
+        stvec.mode = RISCV::tvecMode::Direct;
+        utvec.base = 0;
+        utvec.mode = RISCV::tvecMode::Direct;
+
+        mepc = 0;
+        sepc = 0;
+        uepc = 0;
+        mtval = 0;
+        stval = 0;
+        utval = 0;
+        mscratch = 0;
+        sscratch = 0;
+        uscratch = 0;
+        mideleg = 0;
+        medeleg = 0;
+        sideleg = 0;
+        sedeleg = 0;
+
+        satp.pagingMode = RISCV::PagingMode::Bare;
+        satp.ppn = 0;
+        satp.asid = 0;
+
+        fcsr.frm = RISCV::fpRoundingMode::RNE;
+        fcsr.fflags.nx = false;
+        fcsr.fflags.uf = false;
+        fcsr.fflags.of = false;
+        fcsr.fflags.dz = false;
+        fcsr.fflags.nv = false;
+
     }
 
     template<bool Writing>
@@ -376,7 +463,7 @@ public:
         }
         // TODO error here
     }
-    
+
     template<bool Writing>
     inline void BankedCSR(RISCV::CSRAddress csrAddress, XLEN_t* value) {
         if (csrAddress >= RISCV::CSRAddress::MCYCLE &&
@@ -508,7 +595,7 @@ public:
         if (targetPrivilege < privilegeMode) {
             targetPrivilege = privilegeMode;
         }
-        
+
         // When a trap is taken from privilege mode y into privilege mode x,
         // xPIE is set to the value of xIE;
         // xIE is set to 0;
