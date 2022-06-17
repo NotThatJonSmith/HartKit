@@ -6,7 +6,6 @@
 #include <RiscV.hpp>
 #include <Operands.hpp>
 #include <DecodedInstruction.hpp>
-#include <Swizzle.hpp>
 
 
 enum class HartCallbackArgument {
@@ -34,13 +33,14 @@ public:
 public:
 
     // TODO, bug, MIP MIE MIDELEG MEDELEG are MXLEN bits wide, not XLEN... etc.
-
-    const __uint32_t maximalExtensions;
+    // TODO Maybe move counters and such out of the struct for speed - not used
+    // often, and it's a 24->23 mips perf impact to keep them here! Or pareidolia.
+    // TODO, an experiment with actually good scientific stats comparing packed
+    // bits vs. broken out fields for these registers. First wrap in accessors.
+    
     Fetch *currentFetch = nullptr;
     XLEN_t nextFetchVirtualPC;
 
-    // TODO, an experiment with actually good scientific stats comparing packed
-    // bits vs. broken out fields for these registers.
     XLEN_t regs[RISCV::NumRegs];
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;
     RISCV::misaReg misa;
@@ -53,29 +53,24 @@ public:
     XLEN_t mscratch, sscratch, uscratch;
     XLEN_t mideleg, medeleg, sideleg, sedeleg; // TODO are these "interruptReg"?
     RISCV::satpReg<XLEN_t> satp;
-    RISCV::fcsrReg fcsr;
+    RISCV::fcsrReg fcsr; // TODO float regs
+    __uint64_t counters[32];
+    __uint32_t mcounteren;
+    __uint32_t scounteren;
+    __uint32_t mcountinhibit;
+    XLEN_t hpmevents[32];
+    RISCV::pmpEntry pmpentry[16];
 
-    // TODO when enabling these, move them out!
-    // __uint64_t counters[32];
-    // __uint32_t mcounteren;
-    // __uint32_t scounteren;
-    // __uint32_t mcountinhibit;
-    // XLEN_t hpmevents[32];
-    // RISCV::pmpEntry pmpentry[16];
-
-    // TODO should this just be something the ex_ functions know about?
-    // that's lots of argument-copying.... but then, bundle + ptr chase them?
-    // but, not a lot of opportunity to "know" what changes outside this object
     std::function<void(HartCallbackArgument)> implCallback;
     void emptyCallback(HartCallbackArgument arg) { return; }
 
     HartState(__uint32_t allSupportedExtensions)
-        : maximalExtensions(allSupportedExtensions) {
+        : misa(allSupportedExtensions){
         implCallback = std::bind(&HartState::emptyCallback, this, std::placeholders::_1);
         privilegeMode = RISCV::PrivilegeMode::Machine;
+        // TODO just reset instead?
     }
 
-    // TODO refactor with register clear functions for the important CSRs
     void Reset(XLEN_t resetVector) {
 
         nextFetchVirtualPC = resetVector;
@@ -85,65 +80,16 @@ public:
         }
 
         privilegeMode = RISCV::PrivilegeMode::Machine;
-
-        misa.extensions = maximalExtensions;
-        misa.mxlen = RISCV::xlenTypeToMode<XLEN_t>();
-
-        mstatus.mie = false;
-        mstatus.sie = false;
-        mstatus.uie = false;
-        mstatus.mpie = false;
-        mstatus.spie = false;
-        mstatus.upie = false;
-        mstatus.mprv = false;
-        mstatus.mpp = RISCV::PrivilegeMode::Machine;
-        mstatus.spp = RISCV::PrivilegeMode::Machine;
-        mstatus.fs = RISCV::FloatingPointState::Off;
-        mstatus.xs = RISCV::ExtensionState::AllOff;
-        mstatus.mprv = false;
-        mstatus.sum = false;
-        mstatus.mxr = false;
-        mstatus.tvm = false;
-        mstatus.tw = false;
-        mstatus.tsr = false;
-        mstatus.sxl = RISCV::xlenTypeToMode<XLEN_t>();
-        mstatus.uxl = RISCV::xlenTypeToMode<XLEN_t>();
-        mstatus.sd = false;
-
-        mie.usi = false;
-        mie.ssi = false;
-        mie.msi = false;
-        mie.uti = false;
-        mie.sti = false;
-        mie.mti = false;
-        mie.uei = false;
-        mie.sei = false;
-        mie.mei = false;
-
-        mip.usi = false;
-        mip.ssi = false;
-        mip.msi = false;
-        mip.uti = false;
-        mip.sti = false;
-        mip.mti = false;
-        mip.uei = false;
-        mip.sei = false;
-        mip.mei = false;
-
-        mcause.exceptionCode = RISCV::TrapCause::NONE;
-        mcause.interrupt = false;
-        scause.exceptionCode = RISCV::TrapCause::NONE;
-        scause.interrupt = false;
-        ucause.exceptionCode = RISCV::TrapCause::NONE;
-        ucause.interrupt = false;
-
-        mtvec.base = 0;
-        mtvec.mode = RISCV::tvecMode::Direct;
-        stvec.base = 0;
-        stvec.mode = RISCV::tvecMode::Direct;
-        utvec.base = 0;
-        utvec.mode = RISCV::tvecMode::Direct;
-
+        misa.Reset<XLEN_t>();
+        mstatus.Reset<XLEN_t>();
+        mie.Reset();
+        mip.Reset();
+        mcause.Reset();
+        scause.Reset();
+        ucause.Reset();
+        mtvec.Reset();
+        stvec.Reset();
+        utvec.Reset();
         mepc = 0;
         sepc = 0;
         uepc = 0;
@@ -157,312 +103,11 @@ public:
         medeleg = 0;
         sideleg = 0;
         sedeleg = 0;
-
-        satp.pagingMode = RISCV::PagingMode::Bare;
-        satp.ppn = 0;
-        satp.asid = 0;
-
-        fcsr.frm = RISCV::fpRoundingMode::RNE;
-        fcsr.fflags.nx = false;
-        fcsr.fflags.uf = false;
-        fcsr.fflags.of = false;
-        fcsr.fflags.dz = false;
-        fcsr.fflags.nv = false;
-
+        satp.Reset();
+        fcsr.Reset();
     }
 
-    template<bool Writing>
-    inline void MISA(XLEN_t* value) {
-        if constexpr (Writing) {
-            unsigned int shift = (sizeof(XLEN_t)*8)-2;
-            misa.extensions = *value & 0x3ffffff & maximalExtensions;
-            misa.mxlen = (RISCV::XlenMode)(*value >> shift);
-            implCallback(HartCallbackArgument::ChangedMISA);
-        } else {
-            unsigned int shift = (sizeof(XLEN_t)*8)-2;
-            *value = (((XLEN_t)misa.mxlen) << shift) | misa.extensions;
-        }
-    }
-
-    template<bool Writing>
-    inline void SATP(XLEN_t* value) {
-        if constexpr (Writing) {
-            satp.pagingMode = (RISCV::PagingMode)swizzle<XLEN_t, ExtendBits::Zero, 31, 31>(*value);
-            satp.asid = swizzle<XLEN_t, ExtendBits::Zero, 30, 22>(*value);
-            satp.ppn = swizzle<XLEN_t, ExtendBits::Zero, 21, 0>(*value);
-            if constexpr (!std::is_same<XLEN_t, __uint32_t>()) {
-                satp.pagingMode = (RISCV::PagingMode)swizzle<XLEN_t, ExtendBits::Zero, 63, 60>(*value);
-                satp.asid = swizzle<XLEN_t, ExtendBits::Zero, 59, 44>(*value);
-                satp.ppn = swizzle<XLEN_t, ExtendBits::Zero, 43, 0>(*value);
-            }
-            implCallback(HartCallbackArgument::ChangedSATP);
-        } else {
-            if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                *value = ((satp.pagingMode & 0x000001) << 31)|
-                              (( satp.asid & 0x0001ff) << 22)|
-                              ((  satp.ppn & 0x3fffff) << 00);
-            } else {
-                *value = (((__uint64_t)satp.pagingMode & 0x0000000000f) << 60)|
-                               (((__uint64_t)satp.asid & 0x0000000ffff) << 44)|
-                                (((__uint64_t)satp.ppn & 0xfffffffffff) << 00);
-            }
-        }
-    }
-
-    template<RISCV::PrivilegeMode viewPrivilege, bool Writing>
-    inline void XSTATUS(XLEN_t *value) {
-        if constexpr (Writing) {
-            mstatus.uie = RISCV::uieMask & *value;
-            mstatus.upie = RISCV::upieMask & *value;
-            if constexpr (viewPrivilege != RISCV::PrivilegeMode::User) {
-                mstatus.sie = RISCV::sieMask & *value;
-                mstatus.spie = RISCV::spieMask & *value;
-                mstatus.spp = (RISCV::PrivilegeMode)((RISCV::sppMask & *value) >> RISCV::sppShift);
-                mstatus.fs = (RISCV::FloatingPointState)((RISCV::fsMask & *value) >> RISCV::fsShift);
-                mstatus.xs = (RISCV::ExtensionState)((RISCV::xsMask & *value) >> RISCV::xsShift);
-                mstatus.sum = RISCV::sumMask & *value;
-                mstatus.mxr = RISCV::mxrMask & *value;
-                if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                    mstatus.sd = *value & (1 << 31);
-                } else {
-                    mstatus.sd = *value & ((XLEN_t)1 << 63);
-                }
-            }
-            if constexpr (viewPrivilege == RISCV::PrivilegeMode::Machine) {
-                mstatus.mie = RISCV::mieMask & *value;
-                mstatus.mpie = RISCV::mpieMask & *value;
-                mstatus.mpp = (RISCV::PrivilegeMode)((RISCV::mppMask & *value) >> RISCV::mppShift);
-                if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                    mstatus.uxl = RISCV::XlenMode::XL32;
-                    mstatus.sxl = RISCV::XlenMode::XL32;
-                } else {
-                    mstatus.uxl = (RISCV::XlenMode)((RISCV::uxlMask & *value) >> RISCV::uxlShift);
-                    mstatus.sxl = (RISCV::XlenMode)((RISCV::sxlMask & *value) >> RISCV::sxlShift);
-                }
-                mstatus.mprv = RISCV::mprvMask & *value;
-                mstatus.tvm = RISCV::tvmMask & *value;
-                mstatus.tw = RISCV::twMask & *value;
-                mstatus.tsr = RISCV::tsrMask & *value;
-            }
-            implCallback(HartCallbackArgument::ChangedMSTATUS);
-        } else {
-            *value = 0;
-            *value |= mstatus.uie ? RISCV::uieMask : 0;
-            *value |= mstatus.upie ? RISCV::upieMask : 0;
-            if constexpr (viewPrivilege != RISCV::PrivilegeMode::User) {
-                *value |= mstatus.sie ? RISCV::sieMask : 0;
-                *value |= mstatus.spie ? RISCV::spieMask : 0;
-                *value |= mstatus.spp << RISCV::sppShift;
-                *value |= mstatus.fs << RISCV::fsShift;
-                *value |= mstatus.xs << RISCV::xsShift;
-                *value |= mstatus.sum ? RISCV::sumMask : 0;
-                *value |= mstatus.mxr ? RISCV::mxrMask : 0;
-                if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                    *value |= mstatus.sd ? (1 << 31) : 0;
-                } else {
-                    *value |= mstatus.sd ? ((XLEN_t)1 << 63) : 0;
-                }
-            }
-            if constexpr (viewPrivilege == RISCV::PrivilegeMode::Machine) {
-                *value |= mstatus.mie ? RISCV::mieMask : 0;
-                *value |= mstatus.mpie ? RISCV::mpieMask : 0;
-                *value |= mstatus.mpp << RISCV::mppShift;
-                if constexpr (!std::is_same<XLEN_t, __uint32_t>()) {
-                    *value |= (__uint64_t)(mstatus.uxl) << RISCV::uxlShift;
-                    *value |= (__uint64_t)(mstatus.sxl) << RISCV::sxlShift;
-                }
-                *value |= mstatus.mprv ? RISCV::mprvMask : 0;
-                *value |= mstatus.tvm ? RISCV::tvmMask : 0;
-                *value |= mstatus.tw ? RISCV::twMask : 0;
-                *value |= mstatus.tsr ? RISCV::tsrMask : 0;
-            }
-        }
-    }
-
-    template<bool YisE, RISCV::PrivilegeMode viewPrivilege, bool Writing>
-    inline void XIY(XLEN_t *value) {
-        RISCV::interruptReg* miy = &mip;
-        if constexpr (YisE) {
-            miy = &mie;
-        }
-        if constexpr (Writing) {
-            miy->usi = RISCV::usiMask & *value;
-            miy->uti = RISCV::utiMask & *value;
-            miy->uei = RISCV::ueiMask & *value;
-            if constexpr (viewPrivilege != RISCV::PrivilegeMode::User) {
-                miy->ssi = RISCV::ssiMask & *value;
-                miy->sti = RISCV::stiMask & *value;
-                miy->sei = RISCV::seiMask & *value;
-            }
-            if constexpr (viewPrivilege == RISCV::PrivilegeMode::Machine) {
-                miy->msi = RISCV::msiMask & *value;
-                miy->mti = RISCV::mtiMask & *value;
-                miy->mei = RISCV::meiMask & *value;
-            }
-        } else {
-            *value = 0;
-            *value |= miy->usi ? RISCV::usiMask : 0;
-            *value |= miy->uti ? RISCV::utiMask : 0;
-            *value |= miy->uei ? RISCV::ueiMask : 0;
-            if constexpr (viewPrivilege != RISCV::PrivilegeMode::User) {
-                *value |= miy->ssi ? RISCV::ssiMask : 0;
-                *value |= miy->sti ? RISCV::stiMask : 0;
-                *value |= miy->sei ? RISCV::seiMask : 0;
-            }
-            if constexpr (viewPrivilege == RISCV::PrivilegeMode::Machine) {
-                *value |= miy->msi ? RISCV::msiMask : 0;
-                *value |= miy->mti ? RISCV::mtiMask : 0;
-                *value |= miy->mei ? RISCV::meiMask : 0;
-            }
-        }
-    }
-
-    template<RISCV::PrivilegeMode viewPrivilege, bool Writing>
-    inline void XTVEC(XLEN_t* value) {
-
-        RISCV::tvecReg<XLEN_t>* tvec = &mtvec;
-        if constexpr (viewPrivilege == RISCV::PrivilegeMode::Supervisor) {
-            tvec = &stvec;
-        } else if constexpr (viewPrivilege == RISCV::PrivilegeMode::User) {
-            tvec = &utvec;
-        }
-
-        if constexpr (Writing) {
-            tvec->base = *value & RISCV::tvecBaseMask;
-            tvec->mode = (RISCV::tvecMode)(*value & RISCV::tvecModeMask);
-        } else {
-            *value = ((XLEN_t)tvec->base) | ((XLEN_t)tvec->mode);
-        }
-    }
-
-    template<RISCV::PrivilegeMode viewPrivilege, bool Writing>
-    inline void XCAUSE(XLEN_t* value) {
-        RISCV::causeReg<XLEN_t>* xcause = &mcause;
-        if constexpr (viewPrivilege == RISCV::PrivilegeMode::Supervisor) {
-            xcause = &scause;
-        }
-        if constexpr (viewPrivilege == RISCV::PrivilegeMode::User) {
-            xcause = &ucause;
-        }
-        if constexpr (Writing) {
-            if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                xcause->interrupt = *value & ((XLEN_t)1 << 31);
-                xcause->exceptionCode = (RISCV::TrapCause)(*value & ~((XLEN_t)1 << 31));
-            } else {
-                xcause->interrupt = *value & ((XLEN_t)1 << 63);
-                xcause->exceptionCode = (RISCV::TrapCause)(*value & ~((XLEN_t)1 << 63));
-            }
-        } else {
-            *value = 0;
-            *value |= xcause->exceptionCode;
-            if constexpr (std::is_same<XLEN_t, __uint32_t>()) {
-                if (xcause->interrupt) {
-                    *value |= ((XLEN_t)1 << 31);
-                }
-            } else {
-                if (xcause->interrupt) {
-                    *value |= ((XLEN_t)1 << 63);
-                }
-            }
-        }
-    }
-
-    template<bool Writing>
-    inline void SimpleCSR(XLEN_t& csr, XLEN_t* value) {
-        if constexpr (Writing) {
-            csr = *value;
-        } else {
-            *value = csr;
-        }
-    }
-
-    template<bool Writing>
-    inline void CSR(RISCV::CSRAddress csrAddress, XLEN_t* value) {
-
-        if constexpr (!Writing) {
-            *value = 0;
-        }
-
-        switch (csrAddress) {
-            case RISCV::CSRAddress::MISA: MISA<Writing>(value); break;
-            case RISCV::CSRAddress::SATP: SATP<Writing>(value); break;
-            case RISCV::CSRAddress::MSTATUS: XSTATUS<RISCV::PrivilegeMode::Machine, Writing>(value); break;
-            case RISCV::CSRAddress::SSTATUS: XSTATUS<RISCV::PrivilegeMode::Supervisor, Writing>(value); break;
-            case RISCV::CSRAddress::USTATUS: XSTATUS<RISCV::PrivilegeMode::User, Writing>(value); break;
-            case RISCV::CSRAddress::MIE: XIY<true, RISCV::PrivilegeMode::Machine, Writing>(value); break;
-            case RISCV::CSRAddress::SIE: XIY<true, RISCV::PrivilegeMode::Supervisor, Writing>(value); break;
-            case RISCV::CSRAddress::UIE: XIY<true, RISCV::PrivilegeMode::User, Writing>(value); break;
-            case RISCV::CSRAddress::MIP: XIY<false, RISCV::PrivilegeMode::Machine, Writing>(value); break;
-            case RISCV::CSRAddress::SIP: XIY<false, RISCV::PrivilegeMode::Supervisor, Writing>(value); break;
-            case RISCV::CSRAddress::UIP: XIY<false, RISCV::PrivilegeMode::User, Writing>(value); break;
-            case RISCV::CSRAddress::MTVEC: XTVEC<RISCV::PrivilegeMode::Machine, Writing>(value); break;
-            case RISCV::CSRAddress::MSCRATCH: SimpleCSR<Writing>(mscratch, value); break;
-            case RISCV::CSRAddress::MEPC: SimpleCSR<Writing>(mepc, value); break;
-            case RISCV::CSRAddress::MCAUSE: XCAUSE<RISCV::PrivilegeMode::Machine, Writing>(value); break;
-            case RISCV::CSRAddress::MTVAL: SimpleCSR<Writing>(mtval, value); break;
-            case RISCV::CSRAddress::MEDELEG: SimpleCSR<Writing>(medeleg, value); break;
-            case RISCV::CSRAddress::MIDELEG: SimpleCSR<Writing>(mideleg, value); break;
-            case RISCV::CSRAddress::STVEC: XTVEC<RISCV::PrivilegeMode::Supervisor, Writing>(value); break;
-            case RISCV::CSRAddress::SSCRATCH: SimpleCSR<Writing>(sscratch, value); break;
-            case RISCV::CSRAddress::SEPC: SimpleCSR<Writing>(sepc, value); break;
-            case RISCV::CSRAddress::SCAUSE: XCAUSE<RISCV::PrivilegeMode::Supervisor, Writing>(value); break;
-            case RISCV::CSRAddress::STVAL: SimpleCSR<Writing>(stval, value); break;
-            case RISCV::CSRAddress::SEDELEG: SimpleCSR<Writing>(sedeleg, value); break;
-            case RISCV::CSRAddress::SIDELEG: SimpleCSR<Writing>(sideleg, value); break;
-            case RISCV::CSRAddress::UTVEC: XTVEC<RISCV::PrivilegeMode::User, Writing>(value); break;
-            case RISCV::CSRAddress::USCRATCH: SimpleCSR<Writing>(uscratch, value); break;
-            case RISCV::CSRAddress::UEPC: SimpleCSR<Writing>(uepc, value); break;
-            case RISCV::CSRAddress::UCAUSE: XCAUSE<RISCV::PrivilegeMode::User, Writing>(value); break;
-            case RISCV::CSRAddress::UTVAL: SimpleCSR<Writing>(utval, value); break;
-            case RISCV::CSRAddress::MHARTID:
-                if constexpr (Writing) {
-                    // TODO invalid? read the spec
-                } else {
-                    *value = 0; // TODO multihart, non-zero mhartid option.
-                }
-                break;
-            case RISCV::CSRAddress::MVENDORID:
-                break;
-            case RISCV::CSRAddress::MARCHID:
-                break;
-            case RISCV::CSRAddress::MIMPID:
-                break;
-            case RISCV::CSRAddress::FFLAGS:
-                break;
-            case RISCV::CSRAddress::FRM:
-                break;
-            case RISCV::CSRAddress::FCSR:
-                break;
-            case RISCV::CSRAddress::SCOUNTEREN:
-                break;
-            case RISCV::CSRAddress::MCOUNTEREN:
-                break;
-            case RISCV::CSRAddress::MCOUNTINHIBIT:
-                break;
-            case RISCV::CSRAddress::TSELECT:
-                break;
-            case RISCV::CSRAddress::TDATA1:
-                break;
-            case RISCV::CSRAddress::TDATA2:
-                break;
-            case RISCV::CSRAddress::TDATA3:
-                break;
-            case RISCV::CSRAddress::DCSR:
-                break;
-            case RISCV::CSRAddress::DPC:
-                break;
-            case RISCV::CSRAddress::DSCRATCH0:
-                break;
-            case RISCV::CSRAddress::DSCRATCH1:
-                break;
-            case RISCV::CSRAddress::INVALID_CSR:
-                break;
-            default:
-                BankedCSR<Writing>(csrAddress, value);
-                break;
-        }
-        // TODO error here
-    }
+    // Note, I think that any hardwiring has to happen on notify, not in reg.
 
     template<bool Writing>
     inline void BankedCSR(RISCV::CSRAddress csrAddress, XLEN_t* value) {
@@ -513,16 +158,138 @@ public:
     }
 
     inline XLEN_t ReadCSR(RISCV::CSRAddress csrAddress) {
-        XLEN_t value;
-        CSR<false>(csrAddress, &value);
-        return value;
+        switch (csrAddress) {
+            case RISCV::CSRAddress::MISA: return misa.Read<XLEN_t>(); break;
+            case RISCV::CSRAddress::SATP: return satp.Read(); break;
+            case RISCV::CSRAddress::MSTATUS: return mstatus.Read<XLEN_t, RISCV::PrivilegeMode::Machine>(); break;
+            case RISCV::CSRAddress::SSTATUS: return mstatus.Read<XLEN_t, RISCV::PrivilegeMode::Supervisor>(); break;
+            case RISCV::CSRAddress::USTATUS: return mstatus.Read<XLEN_t, RISCV::PrivilegeMode::User>(); break;
+            case RISCV::CSRAddress::MIE: return mie.Read<XLEN_t, RISCV::PrivilegeMode::Machine>(); break;
+            case RISCV::CSRAddress::SIE: return mie.Read<XLEN_t, RISCV::PrivilegeMode::Supervisor>(); break;
+            case RISCV::CSRAddress::UIE: return mie.Read<XLEN_t, RISCV::PrivilegeMode::User>(); break;
+            case RISCV::CSRAddress::MIP: return mip.Read<XLEN_t, RISCV::PrivilegeMode::Machine>(); break;
+            case RISCV::CSRAddress::SIP: return mip.Read<XLEN_t, RISCV::PrivilegeMode::Supervisor>(); break;
+            case RISCV::CSRAddress::UIP: return mip.Read<XLEN_t, RISCV::PrivilegeMode::User>(); break;
+            case RISCV::CSRAddress::MTVEC: return mtvec.Read(); break;
+            case RISCV::CSRAddress::MSCRATCH: return mscratch; break;
+            case RISCV::CSRAddress::MEPC: return mepc; break;
+            case RISCV::CSRAddress::MCAUSE: return mcause.Read(); break;
+            case RISCV::CSRAddress::MTVAL: return mtval; break;
+            case RISCV::CSRAddress::MEDELEG: return medeleg; break;
+            case RISCV::CSRAddress::MIDELEG: return mideleg; break;
+            case RISCV::CSRAddress::STVEC: return stvec.Read(); break;
+            case RISCV::CSRAddress::SSCRATCH: return sscratch; break;
+            case RISCV::CSRAddress::SEPC: return sepc; break;
+            case RISCV::CSRAddress::SCAUSE: return scause.Read(); break;
+            case RISCV::CSRAddress::STVAL: return stval; break;
+            case RISCV::CSRAddress::SEDELEG: return sedeleg; break;
+            case RISCV::CSRAddress::SIDELEG: return sideleg; break;
+            case RISCV::CSRAddress::UTVEC: return utvec.Read(); break;
+            case RISCV::CSRAddress::USCRATCH: return uscratch; break;
+            case RISCV::CSRAddress::UEPC: return uepc; break;
+            case RISCV::CSRAddress::UCAUSE: return ucause.Read(); break;
+            case RISCV::CSRAddress::UTVAL: return utval; break;
+            case RISCV::CSRAddress::MHARTID: return 0; break; // TODO multihart, non-zero mhartid option.
+            case RISCV::CSRAddress::MVENDORID: break;
+            case RISCV::CSRAddress::MARCHID: break;
+            case RISCV::CSRAddress::MIMPID: break;
+            case RISCV::CSRAddress::FFLAGS: break;
+            case RISCV::CSRAddress::FRM: break;
+            case RISCV::CSRAddress::FCSR: break;
+            case RISCV::CSRAddress::SCOUNTEREN: break;
+            case RISCV::CSRAddress::MCOUNTEREN: break;
+            case RISCV::CSRAddress::MCOUNTINHIBIT: break;
+            case RISCV::CSRAddress::TSELECT: break;
+            case RISCV::CSRAddress::TDATA1: break;
+            case RISCV::CSRAddress::TDATA2: break;
+            case RISCV::CSRAddress::TDATA3: break;
+            case RISCV::CSRAddress::DCSR: break;
+            case RISCV::CSRAddress::DPC: break;
+            case RISCV::CSRAddress::DSCRATCH0: break;
+            case RISCV::CSRAddress::DSCRATCH1: break;
+            case RISCV::CSRAddress::INVALID_CSR: break;
+            default:
+                XLEN_t value;
+                BankedCSR<false>(csrAddress, &value);
+                return value;
+                break;
+        }
+        // TODO error here
+        return 0;
     }
 
     inline void WriteCSR(RISCV::CSRAddress csrAddress, XLEN_t value) {
-        CSR<true>(csrAddress, &value);
+        switch (csrAddress) {
+            case RISCV::CSRAddress::MISA:
+                misa.Write<XLEN_t>(value);
+                implCallback(HartCallbackArgument::ChangedMISA);
+                break;
+            case RISCV::CSRAddress::SATP:
+                satp.Write(value);
+                implCallback(HartCallbackArgument::ChangedSATP);
+                break;
+            case RISCV::CSRAddress::MSTATUS:
+                mstatus.Write<XLEN_t, RISCV::PrivilegeMode::Machine>(value);
+                implCallback(HartCallbackArgument::ChangedMSTATUS);
+                break;
+            case RISCV::CSRAddress::SSTATUS:
+                mstatus.Write<XLEN_t, RISCV::PrivilegeMode::Supervisor>(value);
+                implCallback(HartCallbackArgument::ChangedMSTATUS);
+                break;
+            case RISCV::CSRAddress::USTATUS:
+                mstatus.Write<XLEN_t, RISCV::PrivilegeMode::User>(value);
+                implCallback(HartCallbackArgument::ChangedMSTATUS);
+                break;
+            case RISCV::CSRAddress::MIE: mie.Write<XLEN_t, RISCV::PrivilegeMode::Machine>(value); break;
+            case RISCV::CSRAddress::SIE: mie.Write<XLEN_t, RISCV::PrivilegeMode::Supervisor>(value); break;
+            case RISCV::CSRAddress::UIE: mie.Write<XLEN_t, RISCV::PrivilegeMode::User>(value); break;
+            case RISCV::CSRAddress::MIP: mip.Write<XLEN_t, RISCV::PrivilegeMode::Machine>(value); break;
+            case RISCV::CSRAddress::SIP: mip.Write<XLEN_t, RISCV::PrivilegeMode::Supervisor>(value); break;
+            case RISCV::CSRAddress::UIP: mip.Write<XLEN_t, RISCV::PrivilegeMode::User>(value); break;
+            case RISCV::CSRAddress::MTVEC: mtvec.Write(value); break;
+            case RISCV::CSRAddress::MSCRATCH: mscratch = value; break;
+            case RISCV::CSRAddress::MEPC: mepc = value; break;
+            case RISCV::CSRAddress::MCAUSE: mcause.Write(value); break;
+            case RISCV::CSRAddress::MTVAL: mtval = value; break;
+            case RISCV::CSRAddress::MEDELEG: medeleg = value; break;
+            case RISCV::CSRAddress::MIDELEG: mideleg = value; break;
+            case RISCV::CSRAddress::STVEC: stvec.Write(value); break;
+            case RISCV::CSRAddress::SSCRATCH: sscratch = value; break;
+            case RISCV::CSRAddress::SEPC: sepc = value; break;
+            case RISCV::CSRAddress::SCAUSE: scause.Write(value); break;
+            case RISCV::CSRAddress::STVAL: stval = value; break;
+            case RISCV::CSRAddress::SEDELEG: sedeleg = value; break;
+            case RISCV::CSRAddress::SIDELEG: sideleg = value; break;
+            case RISCV::CSRAddress::UTVEC: utvec.Write(value); break;
+            case RISCV::CSRAddress::USCRATCH: uscratch = value; break;
+            case RISCV::CSRAddress::UEPC: uepc = value; break;
+            case RISCV::CSRAddress::UCAUSE: ucause.Write(value); break;
+            case RISCV::CSRAddress::UTVAL: utval = value; break;
+            case RISCV::CSRAddress::MHARTID: break; // TODO invalid? read the spec, what happens when you write to MHARTID
+            case RISCV::CSRAddress::MVENDORID: break; // TODO all the others
+            case RISCV::CSRAddress::MARCHID: break;
+            case RISCV::CSRAddress::MIMPID: break;
+            case RISCV::CSRAddress::FFLAGS: break;
+            case RISCV::CSRAddress::FRM: break;
+            case RISCV::CSRAddress::FCSR: break;
+            case RISCV::CSRAddress::SCOUNTEREN: break;
+            case RISCV::CSRAddress::MCOUNTEREN: break;
+            case RISCV::CSRAddress::MCOUNTINHIBIT: break;
+            case RISCV::CSRAddress::TSELECT: break;
+            case RISCV::CSRAddress::TDATA1: break;
+            case RISCV::CSRAddress::TDATA2: break;
+            case RISCV::CSRAddress::TDATA3: break;
+            case RISCV::CSRAddress::DCSR: break;
+            case RISCV::CSRAddress::DPC: break;
+            case RISCV::CSRAddress::DSCRATCH0: break;
+            case RISCV::CSRAddress::DSCRATCH1: break;
+            case RISCV::CSRAddress::INVALID_CSR: break;
+            default:
+                BankedCSR<true>(csrAddress, &value);
+                break;
+        }
+        // TODO error here
     }
-
-    // -- Mutations --
 
     inline void RaiseException(RISCV::TrapCause cause, XLEN_t tval) {
 
@@ -542,10 +309,8 @@ public:
         XLEN_t interruptsForU = 0;
 
         // TODO do this without bits, just use raw values. Faster...
-        XLEN_t mipBits = 0;
-        XIY<false, RISCV::PrivilegeMode::Machine, false>(&mipBits);
-        XLEN_t mieBits = 0;
-        XIY<true, RISCV::PrivilegeMode::Machine, false>(&mieBits);
+        XLEN_t mipBits = mip.Read<XLEN_t, RISCV::PrivilegeMode::Machine>();
+        XLEN_t mieBits = mie.Read<XLEN_t, RISCV::PrivilegeMode::Machine>();
 
         for (unsigned int bit = 0; bit < 8*sizeof(XLEN_t); bit++) {
 
@@ -621,7 +386,6 @@ public:
             mstatus.mpp = privilegeMode;
             mstatus.mpie = mstatus.mie;
             mstatus.mie = false;
-            privilegeMode = targetPrivilege;
             nextFetchVirtualPC = mtvec.base;
             if (mtvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*mcause.exceptionCode;
@@ -635,7 +399,6 @@ public:
             mstatus.spp = privilegeMode;
             mstatus.spie = mstatus.sie;
             mstatus.sie = false;
-            privilegeMode = targetPrivilege;
             nextFetchVirtualPC = stvec.base;
             if (stvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*scause.exceptionCode;
@@ -648,7 +411,6 @@ public:
             utval = tval;
             mstatus.upie = mstatus.uie;
             mstatus.uie = false;
-            privilegeMode = targetPrivilege;
             nextFetchVirtualPC = utvec.base;
             if (utvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
                 nextFetchVirtualPC += 4*ucause.exceptionCode;
@@ -658,6 +420,7 @@ public:
             // fatal("Trap destined for nonsense privilege mode."); // TODO
             break;
         }
+        privilegeMode = targetPrivilege;
         implCallback(HartCallbackArgument::ChangedPrivilege);
     }
 
