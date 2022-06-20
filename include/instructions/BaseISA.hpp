@@ -1262,7 +1262,7 @@ inline void ex_csrrw(Operands operands, HartState<XLEN_t> *state, Transactor<XLE
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if (readOnly || state->privilegeMode < requiredPrivilege) {
-        // TODO zero is one option, currentFetch encoding is another, spec struct controls. Implement throughout ISA...
+        // TODO zero is one option, current encoding is another, spec struct controls. Implement throughout ISA...
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }

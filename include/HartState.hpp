@@ -17,18 +17,19 @@ enum class HartCallbackArgument {
     RequestedVMfence
 };
 
+template<typename XLEN_t>
+struct FetchedInstruction {
+    __uint32_t encoding;
+    DecodedInstruction<XLEN_t> instruction;
+    Operands operands;
+    XLEN_t virtualPC;
+
+    // TODO clean up with a pseudoinstruction:
+    RISCV::TrapCause deferredTrap;
+};
 
 template<typename XLEN_t>
 class HartState {
-
-public:
-
-    struct Fetch {
-        __uint32_t encoding;
-        DecodedInstruction<XLEN_t> instruction;
-        Operands operands;
-        XLEN_t virtualPC;
-    };
 
 public:
 
@@ -37,8 +38,8 @@ public:
     // often, and it's a 24->23 mips perf impact to keep them here! Or pareidolia.
     // TODO, an experiment with actually good scientific stats comparing packed
     // bits vs. broken out fields for these registers. First wrap in accessors.
-    
-    Fetch *currentFetch = nullptr;
+
+    FetchedInstruction<XLEN_t>* currentFetch;
     XLEN_t nextFetchVirtualPC;
 
     XLEN_t regs[RISCV::NumRegs];
