@@ -18,7 +18,4 @@ union Operands {
         __uint8_t rd;
         union {__int32_t s; __uint32_t u; } imm;
     } U;
-    struct {
-        __uint32_t word;
-    } status;
 };

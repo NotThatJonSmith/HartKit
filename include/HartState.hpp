@@ -19,13 +19,11 @@ enum class HartCallbackArgument {
 
 template<typename XLEN_t>
 struct FetchedInstruction {
-    __uint32_t encoding;
+    __uint32_t encoding; // TODO reassemble the encoding on demand because it's rare? Maybe.
     DecodedInstruction<XLEN_t> instruction;
     Operands operands;
     XLEN_t virtualPC;
-
-    // TODO clean up with a pseudoinstruction:
-    RISCV::TrapCause deferredTrap;
+    RISCV::TrapCause deferredTrap; // TODO clean up with a pseudoinstruction?
 };
 
 template<typename XLEN_t>

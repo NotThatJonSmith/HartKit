@@ -46,6 +46,14 @@ inline void print_add(Operands operands, std::ostream *out) {
          << RISCV::regName(operands.R.rs2) << std::endl;
 }
 
+// TODO, maybe combine everything:
+// template<typename XLEN_t, bool print>
+// inline void opex_add(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+//     Operands op = r_operands_from(inst);
+//     ex_add<XLEN_t>(op, state, mem);
+//     if constexpr (print) { /* maybe? */ }
+// }
+
 constexpr CodePoint inst_add = {
     r_operands_from,
     ex_add<__uint32_t>,
