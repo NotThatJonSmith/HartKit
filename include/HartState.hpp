@@ -4,9 +4,7 @@
 #include <functional>
 
 #include <RiscV.hpp>
-#include <Operands.hpp>
 #include <DecodedInstruction.hpp>
-
 
 enum class HartCallbackArgument {
     ChangedPrivilege,
@@ -21,7 +19,6 @@ template<typename XLEN_t>
 struct FetchedInstruction {
     __uint32_t encoding; // TODO reassemble the encoding on demand because it's rare? Maybe.
     DecodedInstruction<XLEN_t> instruction;
-    Operands operands;
     XLEN_t virtualPC;
     RISCV::TrapCause deferredTrap; // TODO clean up with a pseudoinstruction?
 };
