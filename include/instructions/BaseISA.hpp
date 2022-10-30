@@ -319,7 +319,7 @@ inline void ex_xori(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "xori "
              << RISCV::regName(rd) << ", "
@@ -408,7 +408,7 @@ inline void ex_auipc(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_jal(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
-    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Sign, J_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, J_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "jal "
              << RISCV::regName(rd) << ", "
@@ -446,10 +446,9 @@ inline void ex_jalr(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_beq(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = swizzle<__uint32_t, B_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, B_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "beq "
              << RISCV::regName(rs1) << ", "
@@ -459,9 +458,8 @@ inline void ex_beq(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
     }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
     if (rs1_value == rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm;
         state->nextFetchVirtualPC = new_pc_value;
     }
 }
@@ -470,7 +468,7 @@ template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_bne(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = swizzle<__uint32_t, B_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, B_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "bne "
              << RISCV::regName(rs1) << ", "
@@ -478,22 +476,19 @@ inline void ex_bne(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
              << imm << std::endl;
         return;
     }
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
     if (rs1_value != rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm;
         state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_blt(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = swizzle<__uint32_t, B_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, B_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "blt "
              << RISCV::regName(rs1) << ", "
@@ -501,23 +496,22 @@ inline void ex_blt(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
              << imm << std::endl;
         return;
     }
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     XLEN_t unsigned_rs2_value = state->regs[rs2];
     SXLEN_t rs2_value = *((SXLEN_t*)&unsigned_rs2_value);
-    SXLEN_t imm_value = imm;
     if (rs1_value < rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm;
         state->nextFetchVirtualPC = new_pc_value;
     }
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_bge(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = swizzle<__uint32_t, B_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, B_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "bge "
              << RISCV::regName(rs1) << ", "
@@ -525,13 +519,13 @@ inline void ex_bge(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
              << imm << std::endl;
         return;
     }
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     XLEN_t unsigned_rs1_value = state->regs[rs1];
     SXLEN_t rs1_value = *((SXLEN_t*)&unsigned_rs1_value);
     XLEN_t unsigned_rs2_value = state->regs[rs2];
     SXLEN_t rs2_value = *((SXLEN_t*)&unsigned_rs2_value);
-    SXLEN_t imm_value = imm;
     if (rs1_value >= rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm;
         state->nextFetchVirtualPC = new_pc_value;
     }
 }
@@ -540,7 +534,7 @@ template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_bltu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = swizzle<__uint32_t, B_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, B_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "bltu "
              << RISCV::regName(rs1) << ", "
@@ -550,10 +544,8 @@ inline void ex_bltu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t
     }
     XLEN_t unsigned_rs1_value = state->regs[rs1];
     XLEN_t unsigned_rs2_value = state->regs[rs2];
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    SXLEN_t imm_value = imm;
     if (unsigned_rs1_value < unsigned_rs2_value) {
-        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm_value;
+        XLEN_t new_pc_value = state->currentFetch->virtualPC + imm;
         state->nextFetchVirtualPC = new_pc_value;
     }
 }
@@ -580,10 +572,9 @@ inline void ex_bgeu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_lb(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "lb "
              << RISCV::regName(rd) << ",("
@@ -593,24 +584,23 @@ inline void ex_lb(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     __uint8_t word;
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t read_address = rs1_value + imm_value;
+    XLEN_t read_address = rs1_value + imm;
     XLEN_t read_size = 1;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t sign_extended_word = (SXLEN_t)word;
     state->regs[rd] = rd != 0 ? sign_extended_word : 0;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_lh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "lh "
              << RISCV::regName(rd) << ",("
@@ -620,14 +610,14 @@ inline void ex_lh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     __uint16_t word;
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t read_address = rs1_value + imm_value;
+    XLEN_t read_address = rs1_value + imm;
     XLEN_t read_size = 2;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t sign_extended_word = (SXLEN_t)word;
     state->regs[rd] = rd != 0 ? sign_extended_word : 0;
 }
@@ -635,10 +625,9 @@ inline void ex_lh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_lw(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "lw "
              << RISCV::regName(rd) << ",("
@@ -648,8 +637,7 @@ inline void ex_lw(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     __uint32_t word;
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t read_address = rs1_value + imm_value;
+    XLEN_t read_address = rs1_value + imm;
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
@@ -661,10 +649,9 @@ inline void ex_lw(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_lbu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "lbu "
              << RISCV::regName(rd) << ",("
@@ -674,14 +661,14 @@ inline void ex_lbu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
     }
     __uint8_t word;
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t read_address = rs1_value + imm_value;
+    XLEN_t read_address = rs1_value + imm;
     XLEN_t read_size = 1;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     SXLEN_t signed_word = word;
     XLEN_t unsigned_word = *((XLEN_t*)(&signed_word));
     state->regs[rd] = rd != 0 ? unsigned_word : 0;
@@ -692,7 +679,7 @@ inline void ex_lhu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, RD>(inst);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "lhu "
              << RISCV::regName(rd) << ",("
@@ -702,8 +689,7 @@ inline void ex_lhu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
     }
     __uint16_t word;
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t read_address = rs1_value + imm_value;
+    XLEN_t read_address = rs1_value + imm;
     XLEN_t read_size = 2;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
@@ -717,10 +703,9 @@ inline void ex_lhu(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t>
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_sb(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = (int32_t)swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "sb "
              << RISCV::regName(rs2) << ",("
@@ -730,8 +715,7 @@ inline void ex_sb(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
-    XLEN_t write_addr = rs1_value + imm_value;
+    XLEN_t write_addr = rs1_value + imm;
     __uint8_t write_value = rs2_value & (XLEN_t)0xff;
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
@@ -743,10 +727,9 @@ inline void ex_sb(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_sh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = (int32_t)swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "sh "
              << RISCV::regName(rs2) << ",("
@@ -756,8 +739,7 @@ inline void ex_sh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
-    XLEN_t write_addr = rs1_value + imm_value;
+    XLEN_t write_addr = rs1_value + imm;
     __uint16_t write_value = rs2_value & (XLEN_t)0xffff;
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
@@ -769,10 +751,9 @@ inline void ex_sh(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_sw(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(inst);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(inst);
-    __uint32_t imm = (int32_t)swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(inst);
     if constexpr (out != nullptr) {
         *out << "sw "
              << RISCV::regName(rs2) << ",("
@@ -782,8 +763,7 @@ inline void ex_sw(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> 
     }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
-    XLEN_t write_addr = rs1_value + imm_value;
+    XLEN_t write_addr = rs1_value + imm;
     __uint32_t write_value = rs2_value & (XLEN_t)0xffffffff;
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);

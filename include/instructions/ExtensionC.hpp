@@ -118,7 +118,7 @@ inline void ex_caddi(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_cjal(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = 1;
-    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(inst);
     if constexpr (out != nullptr) {
         *out << "(C.JAL) jal "
              << RISCV::regName(rd) << ", "
@@ -303,7 +303,7 @@ inline void ex_cbnez(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_
     __uint32_t rs2 = 0;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(inst);
     if constexpr (out != nullptr) {
-        *out << "(C.BNEZ) beq "
+        *out << "(C.BNEZ) bne "
              << RISCV::regName(rs1) << ", "
              << RISCV::regName(rs2) << ", "
              << imm << std::endl;
@@ -380,7 +380,7 @@ inline void ex_clwsp(__uint32_t inst, HartState<XLEN_t> *state, Transactor<XLEN_
     __uint32_t rs1 = 2;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 3, 2, 12, 12, 6, 4, 2>(inst);
     if constexpr (out != nullptr) {
-        *out << "(C.LWSP) lw"
+        *out << "(C.LWSP) lw "
              << RISCV::regName(rd) << ",("
              << imm << ")"
              << RISCV::regName(rs1) << std::endl;
