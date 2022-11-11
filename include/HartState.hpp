@@ -16,14 +16,6 @@ enum class HartCallbackArgument {
 };
 
 template<typename XLEN_t>
-struct FetchedInstruction {
-    __uint32_t encoding; // TODO reassemble the encoding on demand because it's rare? Maybe.
-    DecodedInstruction<XLEN_t> instruction;
-    XLEN_t virtualPC;
-    RISCV::TrapCause deferredTrap; // TODO clean up with a pseudoinstruction?
-};
-
-template<typename XLEN_t>
 class HartState {
 
 public:
@@ -34,8 +26,9 @@ public:
     // TODO, an experiment with actually good scientific stats comparing packed
     // bits vs. broken out fields for these registers. First wrap in accessors.
 
-    FetchedInstruction<XLEN_t>* currentFetch;
-    XLEN_t nextFetchVirtualPC;
+    __uint32_t inst;
+    XLEN_t pc;
+    XLEN_t nextPC;
 
     XLEN_t regs[RISCV::NumRegs];
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;
@@ -69,7 +62,8 @@ public:
 
     void Reset(XLEN_t resetVector) {
 
-        nextFetchVirtualPC = resetVector;
+        pc = resetVector;
+        nextPC = resetVector;
 
         for (unsigned int i = 0; i < RISCV::NumRegs; i++) {
             regs[i] = (XLEN_t)0;
@@ -377,39 +371,39 @@ public:
         case RISCV::PrivilegeMode::Machine:
             mcause.exceptionCode = cause;
             mcause.interrupt = isInterrupt;
-            mepc = currentFetch->virtualPC;
+            mepc = pc;
             mtval = tval;
             mstatus.mpp = privilegeMode;
             mstatus.mpie = mstatus.mie;
             mstatus.mie = false;
-            nextFetchVirtualPC = mtvec.base;
+            nextPC = mtvec.base;
             if (mtvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextFetchVirtualPC += 4*mcause.exceptionCode;
+                nextPC += 4*mcause.exceptionCode;
             }
             break;
         case RISCV::PrivilegeMode::Supervisor:
             scause.exceptionCode = cause;
             scause.interrupt = isInterrupt;
-            sepc = currentFetch->virtualPC;
+            sepc = pc;
             stval = tval;
             mstatus.spp = privilegeMode;
             mstatus.spie = mstatus.sie;
             mstatus.sie = false;
-            nextFetchVirtualPC = stvec.base;
+            nextPC = stvec.base;
             if (stvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextFetchVirtualPC += 4*scause.exceptionCode;
+                nextPC += 4*scause.exceptionCode;
             }
             break;
         case RISCV::PrivilegeMode::User:
             ucause.exceptionCode = cause;
             ucause.interrupt = isInterrupt;
-            uepc = currentFetch->virtualPC;
+            uepc = pc;
             utval = tval;
             mstatus.upie = mstatus.uie;
             mstatus.uie = false;
-            nextFetchVirtualPC = utvec.base;
+            nextPC = utvec.base;
             if (utvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextFetchVirtualPC += 4*ucause.exceptionCode;
+                nextPC += 4*ucause.exceptionCode;
             }
             break;
         default:
@@ -420,6 +414,7 @@ public:
         implCallback(HartCallbackArgument::ChangedPrivilege);
     }
 
+    // TODO move this to instruction code
     template<RISCV::PrivilegeMode trapPrivilege>
     inline void ReturnFromTrap() {
 
@@ -442,7 +437,7 @@ public:
             } else {
                 mstatus.mpp = RISCV::PrivilegeMode::Machine;
             }
-            nextFetchVirtualPC = mepc;
+            nextPC = mepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::Supervisor) {
             mstatus.sie = mstatus.spie;
             privilegeMode = mstatus.spp;
@@ -452,11 +447,11 @@ public:
             } else {
                 mstatus.spp = RISCV::PrivilegeMode::Machine;
             }
-            nextFetchVirtualPC = sepc;
+            nextPC = sepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::User) {
             mstatus.uie = mstatus.upie;
             mstatus.upie = true;
-            nextFetchVirtualPC = uepc;
+            nextPC = uepc;
         } else {
             // fatal("Return from nonsense-privilege-mode trap"); // TODO
         }
