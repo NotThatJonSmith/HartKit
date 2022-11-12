@@ -21,6 +21,7 @@ inline void ex_mul(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     state->regs[rd] = rd != 0 ? rd_value : 0;
     // TODO - RD should take the lower MXLEN bits of the result. Does it?
     // TODO - signed/unsigned multiply?
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -33,6 +34,7 @@ inline void ex_mulh(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO - implement mulh
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -45,6 +47,7 @@ inline void ex_mulhsu(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO - implement mulhsu
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -57,6 +60,7 @@ inline void ex_mulhu(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO - implement mulhu
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -76,6 +80,7 @@ inline void ex_div(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     SXLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? -1 : (XLEN_t)(rs1_value / rs2_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -94,6 +99,7 @@ inline void ex_divu(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? ~(XLEN_t)0 : (rs1_value / rs2_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -113,6 +119,7 @@ inline void ex_rem(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     SXLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : (rs1_value % rs2_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -131,4 +138,5 @@ inline void ex_remu(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : rs1_value % rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 4;
 }

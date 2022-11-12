@@ -9,6 +9,7 @@ inline void ex_wfi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         *out << "wfi" << std::endl;
         return;
     }
+    state->pc += 4;
 }
 
 // TODO URET is only provided if user-mode traps are supported, and should raise an illegal state->instruction otherwise.
@@ -61,4 +62,5 @@ inline void ex_sfencevma(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     state->implCallback(HartCallbackArgument::RequestedVMfence);
+    state->pc += 4;
 }

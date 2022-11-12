@@ -20,10 +20,12 @@ inline void ex_lrw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0; // NOTE sign extend for RV64
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -37,6 +39,7 @@ inline void ex_lrd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -56,10 +59,12 @@ inline void ex_scw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t write_size = 4;
     Transaction<XLEN_t> transaction = mem->Write(write_address, write_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, write_address);
         return;
     }
     state->regs[rd] = rd != 0 ? 0 : 0; // NOTE, zero means sc succeeded - for now it always does!
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -73,6 +78,7 @@ inline void ex_scd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -92,12 +98,14 @@ inline void ex_amoaddw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0;
     tmp += state->regs[rs2];
     mem->Write(state->regs[rs1], 4, (char*)&tmp);
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -111,6 +119,7 @@ inline void ex_amoaddd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
              << std::endl;
         return;
     }
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -130,12 +139,14 @@ inline void ex_amoswapw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0;
     tmp = state->regs[rs2];
     mem->Write(state->regs[rs1], 4, (char*)&tmp);
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -149,6 +160,7 @@ inline void ex_amoswapd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -168,12 +180,14 @@ inline void ex_amoxorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0;
     tmp ^= state->regs[rs2];
     mem->Write(state->regs[rs1], 4, (char*)&tmp);
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -187,6 +201,7 @@ inline void ex_amoxord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -206,12 +221,14 @@ inline void ex_amoorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0;
     tmp |= state->regs[rs2];
     mem->Write(state->regs[rs1], 4, (char*)&tmp);
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -225,6 +242,7 @@ inline void ex_amoord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -244,12 +262,14 @@ inline void ex_amoandw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? tmp : 0;
     tmp &= state->regs[rs2];
     mem->Write(state->regs[rs1], 4, (char*)&tmp);
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -263,6 +283,7 @@ inline void ex_amoandd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -276,6 +297,7 @@ inline void ex_amominw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -289,6 +311,7 @@ inline void ex_amomind(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -302,6 +325,7 @@ inline void ex_amomaxw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -315,6 +339,7 @@ inline void ex_amomaxd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -328,6 +353,7 @@ inline void ex_amominuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -341,6 +367,7 @@ inline void ex_amominud(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -354,6 +381,7 @@ inline void ex_amomaxuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -367,4 +395,5 @@ inline void ex_amomaxud(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     // TODO
+    state->pc += 4;
 }

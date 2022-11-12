@@ -38,6 +38,7 @@ inline void ex_caddi4spn(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     SXLEN_t imm_value = imm;
     XLEN_t rd_value = rs1_value + imm_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
@@ -62,10 +63,12 @@ inline void ex_clw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 2;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? word : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -89,9 +92,11 @@ inline void ex_csw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->pc += 2;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -111,42 +116,37 @@ inline void ex_caddi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     SXLEN_t imm_value = imm;
     XLEN_t rd_value = rs1_value + imm_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_cjal(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = 1;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(state->inst);
     if constexpr (out != nullptr) {
         *out << "(C.JAL) jal "
-             << RISCV::regName(rd) << ", "
+             << RISCV::regName(1) << ", "
              << imm << std::endl;
         return;
     }
-    XLEN_t next_pc_value = state->nextPC;
-    state->regs[rd] = rd != 0 ? next_pc_value : 0;
-    XLEN_t pc_value = state->pc;
-    XLEN_t new_pc_value = pc_value + imm;
-    state->nextPC = new_pc_value;
+    state->regs[1] = state->pc + 2;
+    state->pc += imm;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_cli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
-    __uint32_t rs1 = 0;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(state->inst);
     if constexpr (out != nullptr) {
         *out << "(C.LI) addi "
              << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
+             << RISCV::regName(0) << ", "
              << imm << std::endl;
         return;
     }
-    XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
-    XLEN_t rd_value = rs1_value + imm_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? imm_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -160,27 +160,24 @@ inline void ex_clui(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         return;
     }
     XLEN_t imm_value = imm;
-    XLEN_t rd_value = imm_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? imm_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_caddi16sp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = 2;
-    __uint32_t rs1 = 2;
     __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 4, 3, 5, 5, 2, 2, 6, 6, 4>(state->inst);
     if constexpr (out != nullptr) {
         *out << "(C.ADDI16SP) addi "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
+             << RISCV::regName(2) << ", "
+             << RISCV::regName(2) << ", "
              << imm << std::endl;
         return;
     }
-    XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
-    XLEN_t rd_value = rs1_value + imm_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[2] += imm_value;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -199,6 +196,7 @@ inline void ex_csub(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value - rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -217,6 +215,7 @@ inline void ex_cxor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value ^ rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -235,6 +234,7 @@ inline void ex_cor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value | rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -253,6 +253,7 @@ inline void ex_cand(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value & rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -265,11 +266,8 @@ inline void ex_cj(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
              << imm << std::endl;
         return;
     }
-    XLEN_t next_pc_value = state->nextPC;
-    state->regs[rd] = rd != 0 ? next_pc_value : 0;
-    XLEN_t pc_value = state->pc;
-    XLEN_t new_pc_value = pc_value + imm;
-    state->nextPC = new_pc_value;
+    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->pc += imm;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -277,20 +275,18 @@ inline void ex_cbeqz(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(state->inst);
     __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = 0;
     if constexpr (out != nullptr) {
         *out << "(C.BEQZ) beq "
              << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << ", "
+             << RISCV::regName(0) << ", "
              << imm << std::endl;
         return;
     }
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
     SXLEN_t imm_value = imm;
-    if (rs1_value == rs2_value) {
-        XLEN_t new_pc_value = state->pc + imm_value;
-        state->nextPC = new_pc_value;
+    if (state->regs[rs1] == 0) {
+        state->pc += imm_value;
+    } else {
+        state->pc += 2;
     }
 }
 
@@ -298,21 +294,19 @@ template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_cbnez(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = 0;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(state->inst);
     if constexpr (out != nullptr) {
         *out << "(C.BNEZ) bne "
              << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << ", "
+             << RISCV::regName(0) << ", "
              << imm << std::endl;
         return;
     }
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
     SXLEN_t imm_value = imm;
-    if (rs1_value != rs2_value) {
-        XLEN_t new_pc_value = state->pc + imm_value;
-        state->nextPC = new_pc_value;
+    if (state->regs[rs1] != 0) {
+        state->pc += imm_value;
+    } else {
+        state->pc += 2;
     }
 }
 
@@ -334,6 +328,7 @@ inline void ex_candi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
     XLEN_t rd_value = rs1_value & imm_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -351,6 +346,7 @@ inline void ex_cslli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value << imm;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -369,6 +365,7 @@ inline void ex_cslli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value << imm;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -391,10 +388,12 @@ inline void ex_clwsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
+        state->pc += 2;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
     state->regs[rd] = rd != 0 ? word : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -418,9 +417,11 @@ inline void ex_cswsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->pc += 2;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -436,13 +437,11 @@ inline void ex_cjalr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
              << imm << std::endl;
         return;
     }
-    XLEN_t rd_value = state->nextPC;
     XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
     imm_value &= ~(XLEN_t)1;
-    XLEN_t new_pc_value = rs1_value + imm_value;
-    state->nextPC = new_pc_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->pc = rs1_value + imm_value;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -461,6 +460,7 @@ inline void ex_cadd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value + rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -476,13 +476,11 @@ inline void ex_cjr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
              << imm << std::endl;
         return;
     }
-    XLEN_t rd_value = state->nextPC;
     XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
     imm_value &= ~(XLEN_t)1;
-    XLEN_t new_pc_value = rs1_value + imm_value;
-    state->nextPC = new_pc_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->pc = rs1_value + imm_value;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -501,6 +499,7 @@ inline void ex_cmv(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value + rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -509,6 +508,7 @@ inline void ex_cebreak(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
         *out << "(C.EBREAK) ebreak";
         return;
     }
+    state->pc += 2;
     state->RaiseException(RISCV::TrapCause::BREAKPOINT, state->inst);
 }
 
@@ -527,6 +527,7 @@ inline void ex_csrli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value >> imm;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -545,6 +546,7 @@ inline void ex_csrli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value >> imm;
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -566,6 +568,7 @@ inline void ex_csrai(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (rs1_value & ((XLEN_t)1 << ((sizeof(XLEN_t)*8)-1)))
         rd_value |= (XLEN_t)((1 << imm_value)-1) << ((sizeof(XLEN_t)*8)-imm_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -588,4 +591,5 @@ inline void ex_csrai_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (rs1_value & ((XLEN_t)1 << ((sizeof(XLEN_t)*8)-1)))
         rd_value |= (XLEN_t)((1 << imm_value)-1) << ((sizeof(XLEN_t)*8)-imm_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->pc += 2;
 }

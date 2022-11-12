@@ -12,7 +12,8 @@ enum class HartCallbackArgument {
     ChangedMSTATUS,
     ChangedSATP,
     RequestedIfence,
-    RequestedVMfence
+    RequestedVMfence,
+    TookTrap
 };
 
 template<typename XLEN_t>
@@ -63,7 +64,6 @@ public:
     void Reset(XLEN_t resetVector) {
 
         pc = resetVector;
-        nextPC = resetVector;
 
         for (unsigned int i = 0; i < RISCV::NumRegs; i++) {
             regs[i] = (XLEN_t)0;
@@ -290,6 +290,8 @@ public:
         RISCV::PrivilegeMode targetPrivilege = RISCV::DestinedPrivilegeForCause<XLEN_t>(
             cause, medeleg, sedeleg, misa.extensions);
         TakeTrap<false>(cause, targetPrivilege, tval);
+
+        implCallback(HartCallbackArgument::TookTrap);
     }
 
     inline void ServiceInterrupts() {
@@ -376,9 +378,9 @@ public:
             mstatus.mpp = privilegeMode;
             mstatus.mpie = mstatus.mie;
             mstatus.mie = false;
-            nextPC = mtvec.base;
+            pc = mtvec.base;
             if (mtvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextPC += 4*mcause.exceptionCode;
+                pc += 4*mcause.exceptionCode;
             }
             break;
         case RISCV::PrivilegeMode::Supervisor:
@@ -389,9 +391,9 @@ public:
             mstatus.spp = privilegeMode;
             mstatus.spie = mstatus.sie;
             mstatus.sie = false;
-            nextPC = stvec.base;
+            pc = stvec.base;
             if (stvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextPC += 4*scause.exceptionCode;
+                pc += 4*scause.exceptionCode;
             }
             break;
         case RISCV::PrivilegeMode::User:
@@ -401,9 +403,9 @@ public:
             utval = tval;
             mstatus.upie = mstatus.uie;
             mstatus.uie = false;
-            nextPC = utvec.base;
+            pc = utvec.base;
             if (utvec.mode == RISCV::tvecMode::Vectored && !isInterrupt) {
-                nextPC += 4*ucause.exceptionCode;
+                pc += 4*ucause.exceptionCode;
             }
             break;
         default:
@@ -437,7 +439,7 @@ public:
             } else {
                 mstatus.mpp = RISCV::PrivilegeMode::Machine;
             }
-            nextPC = mepc;
+            pc = mepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::Supervisor) {
             mstatus.sie = mstatus.spie;
             privilegeMode = mstatus.spp;
@@ -447,11 +449,11 @@ public:
             } else {
                 mstatus.spp = RISCV::PrivilegeMode::Machine;
             }
-            nextPC = sepc;
+            pc = sepc;
         } else if constexpr (trapPrivilege == RISCV::PrivilegeMode::User) {
             mstatus.uie = mstatus.upie;
             mstatus.upie = true;
-            nextPC = uepc;
+            pc = uepc;
         } else {
             // fatal("Return from nonsense-privilege-mode trap"); // TODO
         }
