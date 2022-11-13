@@ -42,12 +42,12 @@ public:
     XLEN_t mideleg, medeleg, sideleg, sedeleg; // TODO are these "interruptReg"?
     RISCV::satpReg<XLEN_t> satp;
     RISCV::fcsrReg fcsr; // TODO float regs
-    __uint64_t counters[32];
-    __uint32_t mcounteren;
-    __uint32_t scounteren;
-    __uint32_t mcountinhibit;
-    XLEN_t hpmevents[32];
-    RISCV::pmpEntry pmpentry[16];
+    // __uint64_t counters[32];
+    // __uint32_t mcounteren;
+    // __uint32_t scounteren;
+    // __uint32_t mcountinhibit;
+    // XLEN_t hpmevents[32];
+    // RISCV::pmpEntry pmpentry[16];
 
     std::function<void(HartCallbackArgument)> implCallback;
     void emptyCallback(HartCallbackArgument arg) { return; }
