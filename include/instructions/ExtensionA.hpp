@@ -3,11 +3,11 @@
 #include <RiscV.hpp>
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_lrw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // Does rd have to contain 0? If nonzero, is it an illegal state->instruction?
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_lrw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // Does rd have to contain 0? If nonzero, is it an illegal encodingruction?
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "lrw "
              << RISCV::regName(rd) << ", "
@@ -29,12 +29,12 @@ inline void ex_lrw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_lrd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_lrd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: lrd"
+        *out << "WARNING: encodingruction not implemented: lrd"
              << std::endl;
         return;
     }
@@ -43,10 +43,10 @@ inline void ex_lrd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_scw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_scw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "scw "
              << RISCV::regName(rd) << ", "
@@ -68,12 +68,12 @@ inline void ex_scw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_scd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_scd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: scd"
+        *out << "WARNING: encodingruction not implemented: scd"
              << std::endl;
         return;
     }
@@ -82,10 +82,10 @@ inline void ex_scd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoaddw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoaddw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "amoadd.w "
              << RISCV::regName(rd) << ", "
@@ -109,13 +109,13 @@ inline void ex_amoaddw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoaddd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_amoaddd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // TODO
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amoaddd"
+        *out << "WARNING: encodingruction not implemented: amoaddd"
              << std::endl;
         return;
     }
@@ -123,10 +123,10 @@ inline void ex_amoaddd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoswapw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoswapw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "amoswap.w "
              << RISCV::regName(rd) << ", "
@@ -150,12 +150,12 @@ inline void ex_amoswapw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoswapd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoswapd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amoswapd"
+        *out << "WARNING: encodingruction not implemented: amoswapd"
              << std::endl;
         return;
     }
@@ -164,10 +164,10 @@ inline void ex_amoswapd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoxorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoxorw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "amoxor.w "
              << RISCV::regName(rd) << ", "
@@ -191,12 +191,12 @@ inline void ex_amoxorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoxord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoxord(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amoxord"
+        *out << "WARNING: encodingruction not implemented: amoxord"
              << std::endl;
         return;
     }
@@ -205,10 +205,10 @@ inline void ex_amoxord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoorw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "amoor.w "
              << RISCV::regName(rd) << ", "
@@ -232,12 +232,12 @@ inline void ex_amoorw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoord(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amoord"
+        *out << "WARNING: encodingruction not implemented: amoord"
              << std::endl;
         return;
     }
@@ -246,10 +246,10 @@ inline void ex_amoord(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoandw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoandw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "amoand.w x"
              << RISCV::regName(rd) << ", "
@@ -273,12 +273,12 @@ inline void ex_amoandw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amoandd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amoandd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amoandd"
+        *out << "WARNING: encodingruction not implemented: amoandd"
              << std::endl;
         return;
     }
@@ -287,12 +287,12 @@ inline void ex_amoandd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amominw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amominw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amominw"
+        *out << "WARNING: encodingruction not implemented: amominw"
              << std::endl;
         return;
     }
@@ -301,12 +301,12 @@ inline void ex_amominw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amomind(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amomind(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amomind"
+        *out << "WARNING: encodingruction not implemented: amomind"
              << std::endl;
         return;
     }
@@ -315,12 +315,12 @@ inline void ex_amomind(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amomaxw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amomaxw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amomaxw"
+        *out << "WARNING: encodingruction not implemented: amomaxw"
              << std::endl;
         return;
     }
@@ -329,12 +329,12 @@ inline void ex_amomaxw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amomaxd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amomaxd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amomaxd"
+        *out << "WARNING: encodingruction not implemented: amomaxd"
              << std::endl;
         return;
     }
@@ -343,12 +343,12 @@ inline void ex_amomaxd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amominuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amominuw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amominuw"
+        *out << "WARNING: encodingruction not implemented: amominuw"
              << std::endl;
         return;
     }
@@ -357,12 +357,12 @@ inline void ex_amominuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amominud(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amominud(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amominud"
+        *out << "WARNING: encodingruction not implemented: amominud"
              << std::endl;
         return;
     }
@@ -371,12 +371,12 @@ inline void ex_amominud(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amomaxuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amomaxuw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amomaxuw"
+        *out << "WARNING: encodingruction not implemented: amomaxuw"
              << std::endl;
         return;
     }
@@ -385,12 +385,12 @@ inline void ex_amomaxuw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_amomaxud(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // __uint32_t rd = swizzle<__uint32_t, RD>(state->inst);
-    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(state->inst);
-    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(state->inst);
+inline void ex_amomaxud(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     if constexpr (out != nullptr) {
-        *out << "WARNING: state->instruction not implemented: amomaxud"
+        *out << "WARNING: encodingruction not implemented: amomaxud"
              << std::endl;
         return;
     }

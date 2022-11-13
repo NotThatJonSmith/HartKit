@@ -3,7 +3,7 @@
 #include <RiscV.hpp>
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_wfi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_wfi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // NOP for now. TODO something smarter with the hart's interrupt pins
     if constexpr (out != nullptr) {
         *out << "wfi" << std::endl;
@@ -12,9 +12,9 @@ inline void ex_wfi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     state->pc += 4;
 }
 
-// TODO URET is only provided if user-mode traps are supported, and should raise an illegal state->instruction otherwise.
+// TODO URET is only provided if user-mode traps are supported, and should raise an illegal encodingruction otherwise.
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_uret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_uret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if constexpr (out != nullptr) {
         *out << "uret" << std::endl;
         return;
@@ -27,10 +27,10 @@ inline void ex_uret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 // TODO SRET must be provided if supervisor mode is supported, and should raise an
-// illegal state->instruction exception otherwise. SRET should also raise an illegal state->instruction exception when TSR=1
+// illegal encodingruction exception otherwise. SRET should also raise an illegal encodingruction exception when TSR=1
 // in mstatus, as described in Section 3.1.6.4. 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_sret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_sret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if constexpr (out != nullptr) {
         *out << "sret" << std::endl;
         return;
@@ -43,7 +43,7 @@ inline void ex_sret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_mret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_mret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if constexpr (out != nullptr) {
         *out << "mret" << std::endl;
         return;
@@ -56,7 +56,7 @@ inline void ex_mret(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_sfencevma(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_sfencevma(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if constexpr (out != nullptr) {
         *out << "sfence.vma" << std::endl;
         return;

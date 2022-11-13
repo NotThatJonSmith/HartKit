@@ -27,9 +27,7 @@ public:
     // TODO, an experiment with actually good scientific stats comparing packed
     // bits vs. broken out fields for these registers. First wrap in accessors.
 
-    __uint32_t inst;
     XLEN_t pc;
-    XLEN_t nextPC;
 
     XLEN_t regs[RISCV::NumRegs];
     RISCV::PrivilegeMode privilegeMode = RISCV::PrivilegeMode::Machine;

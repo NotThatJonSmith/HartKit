@@ -22,11 +22,11 @@
 #define CI_SHAMT   ExtendBits::Zero, 12, 12, 6, 2
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_caddi4spn(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_caddi4spn(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CIW_RDX>(state->inst)+8;
+    __uint32_t rd = swizzle<__uint32_t, CIW_RDX>(encoding)+8;
     __uint32_t rs1 = 2;
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 10, 7, 12, 11, 5, 5, 6, 6, 2>(state->inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 10, 7, 12, 11, 5, 5, 6, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.ADDI4SPN) addi "
              << RISCV::regName(rd) << ", "
@@ -43,12 +43,12 @@ inline void ex_caddi4spn(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_clw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_clw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CL_RDX>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CL_RS1X>(state->inst)+8;
+    __uint32_t rd = swizzle<__uint32_t, CL_RDX>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CL_RS1X>(encoding)+8;
     // Yes, this is correct. It's zero extended into the signed immediate.
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(state->inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.LW) lw "
              << RISCV::regName(rd) << ",("
@@ -72,11 +72,11 @@ inline void ex_clw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_csw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rs1 = swizzle<__uint32_t, CS_RS1X>(state->inst)+8;
-    __uint32_t rs2 = swizzle<__uint32_t, CS_RS2X>(state->inst)+8;
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(state->inst);
+    __uint32_t rs1 = swizzle<__uint32_t, CS_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CS_RS2X>(encoding)+8;
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.SW) sw "
              << RISCV::regName(rs2) << ",("
@@ -100,11 +100,11 @@ inline void ex_csw(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_caddi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_caddi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(state->inst);
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(encoding);
+    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.ADDI) addi "
              << RISCV::regName(rd) << ", "
@@ -120,8 +120,8 @@ inline void ex_caddi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cjal(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(state->inst);
+inline void ex_cjal(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.JAL) jal "
              << RISCV::regName(1) << ", "
@@ -133,10 +133,10 @@ inline void ex_cjal(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(state->inst);
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.LI) addi "
              << RISCV::regName(rd) << ", "
@@ -150,9 +150,9 @@ inline void ex_cli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_clui(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
-    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2, 12>(state->inst);
+inline void ex_clui(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
+    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2, 12>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.LUI) lui "
              << RISCV::regName(rd) << ", "
@@ -165,9 +165,9 @@ inline void ex_clui(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_caddi16sp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_caddi16sp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 4, 3, 5, 5, 2, 2, 6, 6, 4>(state->inst);
+    __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 4, 3, 5, 5, 2, 2, 6, 6, 4>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.ADDI16SP) addi "
              << RISCV::regName(2) << ", "
@@ -181,10 +181,10 @@ inline void ex_caddi16sp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csub(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(state->inst)+8;
+inline void ex_csub(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
     if constexpr (out != nullptr) {
         *out << "(C.SUB) sub "
              << RISCV::regName(rd) << ", "
@@ -200,10 +200,10 @@ inline void ex_csub(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cxor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(state->inst)+8;
+inline void ex_cxor(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
     if constexpr (out != nullptr) {
         *out << "(C.XOR) xor "
              << RISCV::regName(rd) << ", "
@@ -219,10 +219,10 @@ inline void ex_cxor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(state->inst)+8;
+inline void ex_cor(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
     if constexpr (out != nullptr) {
         *out << "(C.OR) or "
              << RISCV::regName(rd) << ", "
@@ -238,10 +238,10 @@ inline void ex_cor(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cand(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(state->inst)+8;
+inline void ex_cand(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
     if constexpr (out != nullptr) {
         *out << "(C.AND) and "
              << RISCV::regName(rd) << ", "
@@ -257,8 +257,8 @@ inline void ex_cand(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cj(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(state->inst);
+inline void ex_cj(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(encoding);
     __uint32_t rd = 0;
     if constexpr (out != nullptr) {
         *out << "(C.J) jal "
@@ -271,10 +271,10 @@ inline void ex_cj(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cbeqz(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cbeqz(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
     if constexpr (out != nullptr) {
         *out << "(C.BEQZ) beq "
              << RISCV::regName(rs1) << ", "
@@ -291,10 +291,10 @@ inline void ex_cbeqz(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cbnez(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cbnez(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(state->inst);
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 5, 2, 2, 11, 10, 4, 3, 1>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.BNEZ) bne "
              << RISCV::regName(rs1) << ", "
@@ -311,11 +311,11 @@ inline void ex_cbnez(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_candi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_candi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __int32_t imm = swizzle<__int32_t, ExtendBits::Sign, 12, 12, 6, 2>(state->inst);
+    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __int32_t imm = swizzle<__int32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.ANDI) andi "
              << RISCV::regName(rd) << ", "
@@ -332,9 +332,9 @@ inline void ex_candi(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cslli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t imm = swizzle<__uint32_t, CI_SHAMT>(state->inst);
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
+inline void ex_cslli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t imm = swizzle<__uint32_t, CI_SHAMT>(encoding);
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __uint32_t rs1 = rd;
     if constexpr (out != nullptr) {
         *out << "(C.SLLI) slli "
@@ -350,10 +350,10 @@ inline void ex_cslli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cslli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t imm = swizzle<__uint32_t, CI_SHAMT>(state->inst);
+inline void ex_cslli_128(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t imm = swizzle<__uint32_t, CI_SHAMT>(encoding);
     imm = imm == 0 ? 64 : imm;
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __uint32_t rs1 = rd;
     if constexpr (out != nullptr) {
         *out << "(C.SLLI) slli"
@@ -369,11 +369,11 @@ inline void ex_cslli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_clwsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_clwsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
+    __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __uint32_t rs1 = 2;
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 3, 2, 12, 12, 6, 4, 2>(state->inst);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 3, 2, 12, 12, 6, 4, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.LWSP) lw "
              << RISCV::regName(rd) << ",("
@@ -397,11 +397,11 @@ inline void ex_clwsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cswsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cswsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = 2;
-    __uint32_t rs2 = swizzle<__uint32_t, CSS_RS2>(state->inst);
-    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 8, 7, 12, 9, 2>(state->inst);
+    __uint32_t rs2 = swizzle<__uint32_t, CSS_RS2>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 8, 7, 12, 9, 2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.SWSP) sw "
              << RISCV::regName(rs2) << ",("
@@ -425,11 +425,11 @@ inline void ex_cswsp(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cjalr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cjalr(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __int32_t imm = 0;
     __uint32_t rd = 1;
-    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
+    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.JALR) jalr "
              << RISCV::regName(rd) << ", "
@@ -445,10 +445,10 @@ inline void ex_cjalr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cadd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CR_RD_RS1>(state->inst);
-    __uint32_t rs1 = swizzle<__uint32_t, CR_RD_RS1>(state->inst);
-    __uint32_t rs2 = swizzle<__uint32_t, CR_RS2>(state->inst);
+inline void ex_cadd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CR_RD_RS1>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, CR_RD_RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, CR_RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.ADD) add "
              << RISCV::regName(rd) << ", "
@@ -464,9 +464,9 @@ inline void ex_cadd(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cjr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cjr(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
-    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(state->inst);
+    __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __int32_t imm = 0;
     __uint32_t rd = 0;
     if constexpr (out != nullptr) {
@@ -484,10 +484,10 @@ inline void ex_cjr(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cmv(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CR_RD_RS1>(state->inst);
+inline void ex_cmv(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CR_RD_RS1>(encoding);
     __uint32_t rs1 = 0;
-    __uint32_t rs2 = swizzle<__uint32_t, CR_RS2>(state->inst);
+    __uint32_t rs2 = swizzle<__uint32_t, CR_RS2>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.MV) add "
              << RISCV::regName(rd) << ", "
@@ -503,20 +503,20 @@ inline void ex_cmv(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_cebreak(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+inline void ex_cebreak(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if constexpr (out != nullptr) {
         *out << "(C.EBREAK) ebreak";
         return;
     }
     state->pc += 2;
-    state->RaiseException(RISCV::TrapCause::BREAKPOINT, state->inst);
+    state->RaiseException(RISCV::TrapCause::BREAKPOINT, encoding);
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csrli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(state->inst);
+inline void ex_csrli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.SRLI) srli "
              << RISCV::regName(rd) << ", "
@@ -531,10 +531,10 @@ inline void ex_csrli(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csrli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(state->inst);
+inline void ex_csrli_128(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(encoding);
     imm = imm == 0 ? 64 : imm;
     if constexpr (out != nullptr) {
         *out << "(C.SRLI) srli "
@@ -550,10 +550,10 @@ inline void ex_csrli_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csrai(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(state->inst);
+inline void ex_csrai(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(encoding);
     if constexpr (out != nullptr) {
         *out << "(C.SRAI) srai "
              << RISCV::regName(rd) << ", "
@@ -572,10 +572,10 @@ inline void ex_csrai(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
-inline void ex_csrai_128(HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(state->inst)+8;
-    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(state->inst);
+inline void ex_csrai_128(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t rs1 = swizzle<__uint32_t, CB_RDX_RS1X>(encoding)+8;
+    __uint32_t imm = swizzle<__uint32_t, CB_SHAMT>(encoding);
     imm = imm == 0 ? 64 : imm;
     if constexpr (out != nullptr) {
         *out << "(C.SRAI) srai "
