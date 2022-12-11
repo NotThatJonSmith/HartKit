@@ -8,13 +8,6 @@ inline void ex_mul(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "mul "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << std::endl;
-        return;
-    }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value * rs2_value;
@@ -29,10 +22,6 @@ inline void ex_mulh(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "WARNING: encodingruction not implemented: mulh" << std::endl;
-        return;
-    }
     // TODO - implement mulh
     state->pc += 4;
 }
@@ -42,10 +31,6 @@ inline void ex_mulhsu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "WARNING: encodingruction not implemented: mulhsu" << std::endl;
-        return;
-    }
     // TODO - implement mulhsu
     state->pc += 4;
 }
@@ -55,10 +40,6 @@ inline void ex_mulhu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     // __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "WARNING: encodingruction not implemented: mulhu" << std::endl;
-        return;
-    }
     // TODO - implement mulhu
     state->pc += 4;
 }
@@ -69,13 +50,6 @@ inline void ex_div(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "div "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << std::endl;
-        return;
-    }
     SXLEN_t rs1_value = state->regs[rs1];
     SXLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? -1 : (XLEN_t)(rs1_value / rs2_value);
@@ -88,13 +62,6 @@ inline void ex_divu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "divu "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << std::endl;
-        return;
-    }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? ~(XLEN_t)0 : (rs1_value / rs2_value);
@@ -108,13 +75,6 @@ inline void ex_rem(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "rem "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << std::endl;
-        return;
-    }
     SXLEN_t rs1_value = state->regs[rs1];
     SXLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : (rs1_value % rs2_value);
@@ -127,13 +87,6 @@ inline void ex_remu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
-    if constexpr (out != nullptr) {
-        *out << "remu "
-             << RISCV::regName(rd) << ", "
-             << RISCV::regName(rs1) << ", "
-             << RISCV::regName(rs2) << std::endl;
-        return;
-    }
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : rs1_value % rs2_value;
