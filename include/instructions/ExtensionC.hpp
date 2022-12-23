@@ -49,7 +49,6 @@ inline void ex_clw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 2;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -71,7 +70,6 @@ inline void ex_csw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 2;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
@@ -258,7 +256,6 @@ inline void ex_clwsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 2;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -280,7 +277,6 @@ inline void ex_cswsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 2;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
@@ -339,7 +335,6 @@ inline void ex_cmv(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_cebreak(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    state->pc += 2;
     state->RaiseException(RISCV::TrapCause::BREAKPOINT, encoding);
 }
 

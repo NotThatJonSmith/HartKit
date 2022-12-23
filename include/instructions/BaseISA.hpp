@@ -403,7 +403,6 @@ inline void ex_lb(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t read_size = 1;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -424,7 +423,6 @@ inline void ex_lh(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t read_size = 2;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -446,7 +444,6 @@ inline void ex_lw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -465,7 +462,6 @@ inline void ex_lbu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t read_size = 1;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -488,7 +484,6 @@ inline void ex_lhu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t read_size = 2;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&word);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -510,7 +505,6 @@ inline void ex_sb(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
@@ -529,7 +523,6 @@ inline void ex_sh(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
@@ -548,7 +541,6 @@ inline void ex_sw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, write_addr);
         return;
     }
@@ -573,13 +565,11 @@ inline void ex_ecall(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
         state->privilegeMode == RISCV::PrivilegeMode::Machine ? RISCV::TrapCause::ECALL_FROM_M_MODE :
         state->privilegeMode == RISCV::PrivilegeMode::Supervisor ? RISCV::TrapCause::ECALL_FROM_S_MODE :
         RISCV::TrapCause::ECALL_FROM_U_MODE;
-    state->pc += 4;
     state->RaiseException(cause, encoding);
 }
 
 template<typename XLEN_t>
 inline void ex_ebreak(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    state->pc += 4;
     state->RaiseException(RISCV::TrapCause::BREAKPOINT, encoding);
 }
 
@@ -594,7 +584,6 @@ inline void ex_csrrw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if (readOnly || state->privilegeMode < requiredPrivilege) {
         // TODO zero is one option, current encoding is another, spec struct controls. Implement throughout ISA...
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -616,7 +605,6 @@ inline void ex_csrrs(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if ((rs1 != 0 && readOnly) || state->privilegeMode < requiredPrivilege) {
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -638,7 +626,6 @@ inline void ex_csrrc(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if ((rs1 != 0 && readOnly) || state->privilegeMode < requiredPrivilege) {
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -660,7 +647,6 @@ inline void ex_csrrwi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if (readOnly || state->privilegeMode < requiredPrivilege) {
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -682,7 +668,6 @@ inline void ex_csrrsi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if (readOnly || state->privilegeMode < requiredPrivilege) {
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -702,7 +687,6 @@ inline void ex_csrrci(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     bool readOnly = RISCV::csrIsReadOnly(csr);
     RISCV::PrivilegeMode requiredPrivilege = RISCV::csrRequiredPrivilege(csr);
     if (readOnly || state->privilegeMode < requiredPrivilege) {
-        state->pc += 4;
         state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, 0);
         return;
     }
@@ -714,7 +698,6 @@ inline void ex_csrrci(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
 
 template<typename XLEN_t>
 inline void ex_illegal(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    state->pc += 4;
     state->RaiseException(RISCV::TrapCause::ILLEGAL_INSTRUCTION, encoding);
 }
 

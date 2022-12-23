@@ -12,7 +12,6 @@ inline void ex_lrw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -39,7 +38,6 @@ inline void ex_scw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t write_size = 4;
     Transaction<XLEN_t> transaction = mem->Write(write_address, write_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, write_address);
         return;
     }
@@ -66,7 +64,6 @@ inline void ex_amoaddw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -95,7 +92,6 @@ inline void ex_amoswapw(__uint32_t encoding, HartState<XLEN_t> *state, Transacto
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -124,7 +120,6 @@ inline void ex_amoxorw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -153,7 +148,6 @@ inline void ex_amoorw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
@@ -182,7 +176,6 @@ inline void ex_amoandw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor
     XLEN_t read_size = 4;
     Transaction<XLEN_t> transaction = mem->Read(read_address, read_size, (char*)&tmp);
     if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != read_size) {
-        state->pc += 4;
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
