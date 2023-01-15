@@ -8,6 +8,11 @@ inline void ex_wfi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     state->pc += 4;
 }
 
+template<typename XLEN_t>
+inline void print_wfi(__uint32_t encoding, std::ostream* out) {
+    *out << "wfi" << std::endl;
+}
+
 // TODO URET is only provided if user-mode traps are supported, and should raise an illegal encodingruction otherwise.
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_uret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
@@ -16,6 +21,11 @@ inline void ex_uret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
         return;
     }
     state->template ReturnFromTrap<RISCV::PrivilegeMode::User>();
+}
+
+template<typename XLEN_t>
+inline void print_uret(__uint32_t encoding, std::ostream* out) {
+    *out << "uret" << std::endl;
 }
 
 // TODO SRET must be provided if supervisor mode is supported, and should raise an
@@ -30,6 +40,11 @@ inline void ex_sret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     state->template ReturnFromTrap<RISCV::PrivilegeMode::Supervisor>();
 }
 
+template<typename XLEN_t>
+inline void print_sret(__uint32_t encoding, std::ostream* out) {
+    *out << "sret" << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_mret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     if (state->privilegeMode < RISCV::PrivilegeMode::Machine) {
@@ -39,8 +54,18 @@ inline void ex_mret(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     state->template ReturnFromTrap<RISCV::PrivilegeMode::Machine>();
 }
 
+template<typename XLEN_t>
+inline void print_mret(__uint32_t encoding, std::ostream* out) {
+    *out << "mret" << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_sfencevma(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     state->implCallback(HartCallbackArgument::RequestedVMfence);
     state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_sfencevma(__uint32_t encoding, std::ostream* out) {
+    *out << "sfence.vma" << std::endl;
 }

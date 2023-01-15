@@ -17,6 +17,17 @@ inline void ex_mul(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     state->pc += 4;
 }
 
+template<typename XLEN_t>
+inline void print_mul(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "mul "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_mulh(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
@@ -24,6 +35,11 @@ inline void ex_mulh(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     // TODO - implement mulh
     state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_mulh(__uint32_t encoding, std::ostream* out) {
+    *out << "WARNING: instruction not implemented: mulh" << std::endl;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -35,6 +51,11 @@ inline void ex_mulhsu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<
     state->pc += 4;
 }
 
+template<typename XLEN_t>
+inline void print_mulhsu(__uint32_t encoding, std::ostream* out) {
+    *out << "WARNING: instruction not implemented: mulhsu" << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_mulhu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     // __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
@@ -42,6 +63,11 @@ inline void ex_mulhu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     // __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     // TODO - implement mulhu
     state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_mulhu(__uint32_t encoding, std::ostream* out) {
+    *out << "WARNING: instruction not implemented: mulhu" << std::endl;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -57,6 +83,17 @@ inline void ex_div(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     state->pc += 4;
 }
 
+template<typename XLEN_t>
+inline void print_div(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "div "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_divu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
@@ -67,6 +104,17 @@ inline void ex_divu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     XLEN_t rd_value = rs2_value == 0 ? ~(XLEN_t)0 : (rs1_value / rs2_value);
     state->regs[rd] = rd != 0 ? rd_value : 0;
     state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_divu(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "divu "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
 }
 
 template<typename XLEN_t, std::ostream* out = nullptr>
@@ -82,6 +130,17 @@ inline void ex_rem(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     state->pc += 4;
 }
 
+template<typename XLEN_t>
+inline void print_rem(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "rem "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_remu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
@@ -92,4 +151,15 @@ inline void ex_remu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     XLEN_t rd_value = rs2_value == 0 ? rs1_value : rs1_value % rs2_value;
     state->regs[rd] = rd != 0 ? rd_value : 0;
     state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_remu(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "remu "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
 }

@@ -14,11 +14,6 @@
 #include <instructions/ExtensionA.hpp>
 #include <instructions/ExtensionM.hpp>
 #include <instructions/PrivilegedISA.hpp>
-#include <disassembly/BaseISA.hpp>
-#include <disassembly/ExtensionC.hpp>
-#include <disassembly/ExtensionA.hpp>
-#include <disassembly/ExtensionM.hpp>
-#include <disassembly/PrivilegedISA.hpp>
 
 CREATE_INSTRUCTION(add)
 CREATE_INSTRUCTION(sub)
