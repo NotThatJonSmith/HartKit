@@ -58,14 +58,12 @@ inline void ex_clw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_csw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rs1 = swizzle<__uint32_t, CS_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CS_RS2X>(encoding)+8;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(encoding);
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
-    SXLEN_t imm_value = imm;
-    XLEN_t write_addr = rs1_value + imm_value;
+    XLEN_t write_addr = rs1_value + imm;
     __uint32_t write_value = rs2_value & (XLEN_t)0xffffffff;
     XLEN_t write_size = sizeof(write_value);
     Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
@@ -78,13 +76,11 @@ inline void ex_csw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_caddi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
     XLEN_t rs1_value = state->regs[rs1];
-    SXLEN_t imm_value = imm;
-    XLEN_t rd_value = rs1_value + imm_value;
+    XLEN_t rd_value = rs1_value + imm;
     state->regs[rd] = rd != 0 ? rd_value : 0;
     state->pc += 2;
 }
@@ -117,10 +113,8 @@ inline void ex_clui(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
 
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_caddi16sp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
     __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 4, 3, 5, 5, 2, 2, 6, 6, 4>(encoding);
-    SXLEN_t imm_value = imm;
-    state->regs[2] += imm_value;
+    state->regs[2] += imm;
     state->pc += 2;
 }
 
@@ -129,10 +123,7 @@ inline void ex_csub(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
-    XLEN_t rd_value = rs1_value - rs2_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? state->regs[rs1] - state->regs[rs2] : 0;
     state->pc += 2;
 }
 
@@ -141,10 +132,7 @@ inline void ex_cxor(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
-    XLEN_t rd_value = rs1_value ^ rs2_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? state->regs[rs1] ^ state->regs[rs2] : 0;
     state->pc += 2;
 }
 
@@ -153,10 +141,7 @@ inline void ex_cor(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
-    XLEN_t rd_value = rs1_value | rs2_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? state->regs[rs1] | state->regs[rs2] : 0;
     state->pc += 2;
 }
 
@@ -165,10 +150,7 @@ inline void ex_cand(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __uint32_t rd = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
-    XLEN_t rs1_value = state->regs[rs1];
-    XLEN_t rs2_value = state->regs[rs2];
-    XLEN_t rd_value = rs1_value & rs2_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd != 0 ? state->regs[rs1] & state->regs[rs2] : 0;
     state->pc += 2;
 }
 
