@@ -42,6 +42,33 @@ inline void print_add(__uint32_t encoding, std::ostream* out) {
 }
 
 template<typename XLEN_t>
+inline void ex_addw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    __uint32_t rs1_value = 0xffffffff & state->regs[rs1];
+    __uint32_t rs2_value = 0xffffffff & state->regs[rs2];
+    __uint32_t rd_value = rs1_value + rs2_value;
+    XLEN_t ext_ones = 0;
+    if constexpr (!std::is_same<XLEN_t, __uint32_t>())
+        ext_ones = ((XLEN_t)~0 << 32);
+    XLEN_t rd_value_sign_extended =  (rd_value & 0x80000000) ? (ext_ones | rd_value) : rd_value;
+    state->regs[rd] = rd != 0 ? rd_value_sign_extended : 0;
+    state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_addw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "addw "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
+template<typename XLEN_t>
 inline void ex_sub(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
@@ -65,6 +92,33 @@ inline void print_sub(__uint32_t encoding, std::ostream* out) {
 }
 
 template<typename XLEN_t>
+inline void ex_subw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    __uint32_t rs1_value = 0xffffffff & state->regs[rs1];
+    __uint32_t rs2_value = 0xffffffff & state->regs[rs2];
+    __uint32_t rd_value = rs1_value - rs2_value;
+    XLEN_t ext_ones = 0;
+    if constexpr (!std::is_same<XLEN_t, __uint32_t>())
+        ext_ones = ((XLEN_t)~0 << 32);
+    XLEN_t rd_value_sign_extended =  (rd_value & 0x80000000) ? (ext_ones | rd_value) : rd_value;
+    state->regs[rd] = rd != 0 ? rd_value_sign_extended : 0;
+    state->pc += 4;
+}
+
+template<typename XLEN_t>
+inline void print_subw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "subw "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
+template<typename XLEN_t>
 inline void ex_sll(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
@@ -82,6 +136,23 @@ inline void print_sll(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     *out << "sll "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_sllw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_sllw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "sllw "
          << RISCV::regName(rd) << ", "
          << RISCV::regName(rs1) << ", "
          << RISCV::regName(rs2) << std::endl;
@@ -187,6 +258,23 @@ inline void print_sra(__uint32_t encoding, std::ostream* out) {
 }
 
 template<typename XLEN_t>
+inline void ex_sraw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_sraw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "sraw "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
+template<typename XLEN_t>
 inline void ex_srl(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
@@ -204,6 +292,23 @@ inline void print_srl(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     *out << "srl "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << RISCV::regName(rs2) << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_srlw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_srlw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    *out << "srlw "
          << RISCV::regName(rd) << ", "
          << RISCV::regName(rs1) << ", "
          << RISCV::regName(rs2) << std::endl;
@@ -278,6 +383,23 @@ inline void print_addi(__uint32_t encoding, std::ostream* out) {
 }
 
 template<typename XLEN_t>
+inline void ex_addiw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_addiw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
+    *out << "addiw "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << imm << std::endl;
+}
+
+template<typename XLEN_t>
 inline void ex_slli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
@@ -294,6 +416,23 @@ inline void print_slli(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 24, 20>(encoding);
     *out << "slli "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << imm << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_slliw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_slliw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 24, 20>(encoding);
+    *out << "slliw "
          << RISCV::regName(rd) << ", "
          << RISCV::regName(rs1) << ", "
          << imm << std::endl;
@@ -322,6 +461,23 @@ inline void print_srli(__uint32_t encoding, std::ostream* out) {
 }
 
 template<typename XLEN_t>
+inline void ex_srliw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_srliw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 24, 20>(encoding);
+    *out << "srliw "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << imm << std::endl;
+}
+
+template<typename XLEN_t>
 inline void ex_srai(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
@@ -342,6 +498,23 @@ inline void print_srai(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __uint32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 24, 20>(encoding);
     *out << "srai "
+         << RISCV::regName(rd) << ", "
+         << RISCV::regName(rs1) << ", "
+         << imm << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_sraiw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_sraiw(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 24, 20>(encoding);
+    *out << "sraiw "
          << RISCV::regName(rd) << ", "
          << RISCV::regName(rs1) << ", "
          << imm << std::endl;
@@ -766,6 +939,7 @@ inline void print_lh(__uint32_t encoding, std::ostream* out) {
 }
 
 // TODO endianness-agnostic impl; for now x86 and RV being both LE save us
+
 template<typename XLEN_t>
 inline void ex_lw(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
@@ -790,6 +964,22 @@ inline void print_lw(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
     *out << "lw "
+         << RISCV::regName(rd) << ",(" << imm << ")"
+         << RISCV::regName(rs1) << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_ld(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_ld(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
+    *out << "ld "
          << RISCV::regName(rd) << ",(" << imm << ")"
          << RISCV::regName(rs1) << std::endl;
 }
@@ -852,6 +1042,22 @@ inline void print_lhu(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
     *out << "lhu "
+         << RISCV::regName(rd) << ",(" << imm << ")"
+         << RISCV::regName(rs1) << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_lwu(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_lwu(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
+    *out << "lwu "
          << RISCV::regName(rd) << ",(" << imm << ")"
          << RISCV::regName(rs1) << std::endl;
 }
@@ -936,6 +1142,22 @@ inline void print_sw(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(encoding);
     *out << "sw "
+         << RISCV::regName(rs2) << ",(" << imm << ")"
+         << RISCV::regName(rs1) << std::endl;
+}
+
+template<typename XLEN_t>
+inline void ex_sd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    // TODO 64
+    exit(1);
+}
+
+template<typename XLEN_t>
+inline void print_sd(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(encoding);
+    *out << "sd "
          << RISCV::regName(rs2) << ",(" << imm << ")"
          << RISCV::regName(rs1) << std::endl;
 }

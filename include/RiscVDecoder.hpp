@@ -129,6 +129,18 @@ CREATE_INSTRUCTION(uret)
 CREATE_INSTRUCTION(sret)
 CREATE_INSTRUCTION(mret)
 CREATE_INSTRUCTION(sfencevma)
+CREATE_INSTRUCTION(lwu)
+CREATE_INSTRUCTION(ld)
+CREATE_INSTRUCTION(sd)
+CREATE_INSTRUCTION(addiw)
+CREATE_INSTRUCTION(slliw)
+CREATE_INSTRUCTION(srliw)
+CREATE_INSTRUCTION(sraiw)
+CREATE_INSTRUCTION(addw)
+CREATE_INSTRUCTION(subw)
+CREATE_INSTRUCTION(sllw)
+CREATE_INSTRUCTION(srlw)
+CREATE_INSTRUCTION(sraw)
 
 #define QUADRANT    ExtendBits::Zero, 1, 0
 #define OPCODE      ExtendBits::Zero, 6, 2
@@ -144,8 +156,10 @@ constexpr Instruction<XLEN_t> decode_load(__uint32_t inst, __uint32_t extensions
     case RISCV::MinorOpcode::LB: return inst_lb<XLEN_t>;
     case RISCV::MinorOpcode::LH: return inst_lh<XLEN_t>;
     case RISCV::MinorOpcode::LW: return inst_lw<XLEN_t>;
+    case RISCV::MinorOpcode::LD:  return (mxlen == RISCV::XlenMode::XL32) ? inst_illegal<XLEN_t> : inst_ld<XLEN_t>;
     case RISCV::MinorOpcode::LBU: return inst_lbu<XLEN_t>;
     case RISCV::MinorOpcode::LHU: return inst_lhu<XLEN_t>;
+    case RISCV::MinorOpcode::LWU:  return (mxlen == RISCV::XlenMode::XL32) ? inst_illegal<XLEN_t> : inst_lwu<XLEN_t>;
     default: return inst_illegal<XLEN_t>;
     }
 }
@@ -169,6 +183,7 @@ constexpr Instruction<XLEN_t> decode_misc_mem(__uint32_t inst, __uint32_t extens
     }
 }
 
+// TODO: strictly speaking, SLLI is only valid if FUNCT7 is all zeroes. There are a lot of little non-strict d/c encodings throughout the decoder.
 template<typename XLEN_t>
 constexpr Instruction<XLEN_t> decode_op_imm(__uint32_t inst, __uint32_t extensionsVector, RISCV::XlenMode mxlen) {
     switch (swizzle<__uint32_t, FUNCT3>(inst)) {
@@ -191,7 +206,19 @@ constexpr Instruction<XLEN_t> decode_op_imm(__uint32_t inst, __uint32_t extensio
 
 template<typename XLEN_t>
 constexpr Instruction<XLEN_t> decode_op_imm_32(__uint32_t inst, __uint32_t extensionsVector, RISCV::XlenMode mxlen) { // TODO op_imm, __uint32_t extensionsVector_32
-    return inst_unimplemented<XLEN_t>;
+    if (mxlen == RISCV::XlenMode::XL32)
+        return inst_reserved<XLEN_t>;
+    switch (swizzle<__uint32_t, FUNCT3>(inst)) {
+    case RISCV::MinorOpcode::ADDIW: return inst_addiw<XLEN_t>;
+    case RISCV::MinorOpcode::SLLIW: return inst_slliw<XLEN_t>;
+    case RISCV::MinorOpcode::SRI:
+        switch(swizzle<__uint32_t, FUNCT7>(inst)) {
+        case RISCV::SubMinorOpcode::SRAIW: return inst_sraiw<XLEN_t>;
+        case RISCV::SubMinorOpcode::SRLIW: return inst_srliw<XLEN_t>;
+        default: return inst_illegal<XLEN_t>;
+        }
+    default: return inst_illegal<XLEN_t>;
+    }
 }
 
 template<typename XLEN_t>
@@ -205,6 +232,7 @@ constexpr Instruction<XLEN_t> decode_store(__uint32_t inst, __uint32_t extension
     case RISCV::MinorOpcode::SB: return inst_sb<XLEN_t>;
     case RISCV::MinorOpcode::SH: return inst_sh<XLEN_t>;
     case RISCV::MinorOpcode::SW: return inst_sw<XLEN_t>;
+    case RISCV::MinorOpcode::SD: return (mxlen == RISCV::XlenMode::XL32) ? inst_illegal<XLEN_t> : inst_sd<XLEN_t>;
     default: return inst_illegal<XLEN_t>;
     }
 }
@@ -283,7 +311,16 @@ constexpr Instruction<XLEN_t> decode_op(__uint32_t inst, __uint32_t extensionsVe
 
 template<typename XLEN_t>
 constexpr Instruction<XLEN_t> decode_op_32(__uint32_t inst, __uint32_t extensionsVector, RISCV::XlenMode mxlen) {
-    return inst_unimplemented<XLEN_t>;
+    if (mxlen == RISCV::XlenMode::XL32)
+        return inst_illegal<XLEN_t>;
+    switch (swizzle<__uint32_t, OP_MINOR>(inst)) {
+    case RISCV::MinorOpcode::ADDW: return inst_addw<XLEN_t>;
+    case RISCV::MinorOpcode::SUBW: return inst_subw<XLEN_t>;
+    case RISCV::MinorOpcode::SLLW: return inst_sllw<XLEN_t>;
+    case RISCV::MinorOpcode::SRLW: return inst_srlw<XLEN_t>;
+    case RISCV::MinorOpcode::SRAW: return inst_sraw<XLEN_t>;
+    default: return inst_illegal<XLEN_t>;
+    }
 }
 
 template<typename XLEN_t>
