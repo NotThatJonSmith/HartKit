@@ -141,6 +141,8 @@ CREATE_INSTRUCTION(subw)
 CREATE_INSTRUCTION(sllw)
 CREATE_INSTRUCTION(srlw)
 CREATE_INSTRUCTION(sraw)
+CREATE_INSTRUCTION(csd)
+CREATE_INSTRUCTION(csdsp)
 
 #define QUADRANT    ExtendBits::Zero, 1, 0
 #define OPCODE      ExtendBits::Zero, 6, 2
@@ -457,7 +459,7 @@ constexpr Instruction<XLEN_t> decode_compressed_q0(__uint32_t inst, __uint32_t e
     case 7:
         if (mxlen == RISCV::XlenMode::XL32)
             return inst_unimplemented<XLEN_t>; // C.FSW TODO
-        return inst_unimplemented<XLEN_t>; // C.SD TODO
+        return inst_csd<XLEN_t>;
     default: return inst_illegal<XLEN_t>;
     }
 }
@@ -546,7 +548,10 @@ constexpr Instruction<XLEN_t> decode_compressed_q2(__uint32_t inst, __uint32_t e
         }
     case 5: return inst_unimplemented<XLEN_t>; // C.FSDSP C.SQSP TODO
     case 6: return inst_cswsp<XLEN_t>;
-    case 7: return inst_unimplemented<XLEN_t>; // C.FSWSP C.SDSP TODO
+    case 7:
+        if (mxlen == RISCV::XlenMode::XL32)
+            return inst_unimplemented<XLEN_t>; // C.FSWSP TODO
+        return inst_csdsp<XLEN_t>;
     default: return inst_illegal<XLEN_t>;
     }
 }

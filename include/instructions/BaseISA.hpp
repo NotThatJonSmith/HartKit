@@ -1148,8 +1148,20 @@ inline void print_sw(__uint32_t encoding, std::ostream* out) {
 
 template<typename XLEN_t>
 inline void ex_sd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
-    // TODO 64
-    exit(1);
+    __uint32_t rs1 = swizzle<__uint32_t, RS1>(encoding);
+    __uint32_t rs2 = swizzle<__uint32_t, RS2>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, S_IMM>(encoding);
+    XLEN_t rs1_value = state->regs[rs1];
+    XLEN_t rs2_value = state->regs[rs2];
+    XLEN_t write_addr = rs1_value + imm;
+    __uint64_t write_value = rs2_value;
+    XLEN_t write_size = sizeof(write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
+    state->pc += 4;
 }
 
 template<typename XLEN_t>

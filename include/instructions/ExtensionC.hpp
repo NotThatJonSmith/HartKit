@@ -108,6 +108,36 @@ inline void print_csw(__uint32_t encoding, std::ostream* out) {
          << RISCV::regName(rs1) << std::endl;
 }
 
+// TODO, when bringing up 128-bit XLEN, need to reintroduce masking off the low 64 of a 128.
+template<typename XLEN_t, std::ostream* out = nullptr>
+inline void ex_csd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    __uint32_t rs1 = swizzle<__uint32_t, CS_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CS_RS2X>(encoding)+8;
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(encoding);
+    XLEN_t rs1_value = state->regs[rs1];
+    XLEN_t rs2_value = state->regs[rs2];
+    XLEN_t write_addr = rs1_value + imm;
+    __uint64_t write_value = rs2_value;
+    XLEN_t write_size = sizeof(write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
+    state->pc += 2;
+}
+
+template<typename XLEN_t>
+inline void print_csd(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rs1 = swizzle<__uint32_t, CS_RS1X>(encoding)+8;
+    __uint32_t rs2 = swizzle<__uint32_t, CS_RS2X>(encoding)+8;
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 5, 5, 12, 10, 6, 6, 2>(encoding);
+    *out << "(C.SD) sd "
+         << RISCV::regName(rs2) << ",("
+         << imm << ")"
+         << RISCV::regName(rs1) << std::endl;
+}
+
 template<typename XLEN_t, std::ostream* out = nullptr>
 inline void ex_caddi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
@@ -470,6 +500,37 @@ inline void print_cswsp(__uint32_t encoding, std::ostream* out) {
     __uint32_t rs2 = swizzle<__uint32_t, CSS_RS2>(encoding);
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 8, 7, 12, 9, 2>(encoding);
     *out << "(C.SWSP) sw "
+         << RISCV::regName(rs2) << ",("
+         << imm << ")"
+         << RISCV::regName(rs1) << std::endl;
+}
+
+template<typename XLEN_t, std::ostream* out = nullptr>
+inline void ex_csdsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
+    typedef typename SignedXLEN<XLEN_t>::type SXLEN_t;
+    __uint32_t rs1 = 2;
+    __uint32_t rs2 = swizzle<__uint32_t, CSS_RS2>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 8, 7, 12, 9, 2>(encoding);
+    XLEN_t rs1_value = state->regs[rs1];
+    XLEN_t rs2_value = state->regs[rs2];
+    SXLEN_t imm_value = imm;
+    XLEN_t write_addr = rs1_value + imm_value;
+    __uint64_t write_value = rs2_value;
+    XLEN_t write_size = sizeof(write_value);
+    Transaction<XLEN_t> transaction = mem->Write(write_addr, write_size, (char*)&write_value);
+    if (transaction.trapCause != RISCV::TrapCause::NONE || transaction.transferredSize != write_size) {
+        state->RaiseException(transaction.trapCause, write_addr);
+        return;
+    }
+    state->pc += 2;
+}
+
+template<typename XLEN_t>
+inline void print_csdsp(__uint32_t encoding, std::ostream* out) {
+    __uint32_t rs1 = 2;
+    __uint32_t rs2 = swizzle<__uint32_t, CSS_RS2>(encoding);
+    __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 8, 7, 12, 9, 2>(encoding);
+    *out << "(C.SDSP) sw "
          << RISCV::regName(rs2) << ",("
          << imm << ")"
          << RISCV::regName(rs1) << std::endl;
