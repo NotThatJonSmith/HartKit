@@ -18,5 +18,3 @@ struct Instruction {
     DecodedInstruction<XLEN_t> executionFunction;
     DisassemblyFunction<XLEN_t> disassemblyFunction;
 };
-
-#define CREATE_INSTRUCTION(mnemonic) template<typename XLEN_t> Instruction<XLEN_t> inst_##mnemonic { ex_##mnemonic<XLEN_t>, print_##mnemonic<XLEN_t> };

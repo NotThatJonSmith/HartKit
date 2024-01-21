@@ -280,7 +280,6 @@ public:
     }
 
     inline void RaiseException(RISCV::TrapCause cause, XLEN_t tval) {
-
         if (cause == RISCV::TrapCause::NONE) {
             return;
         }
