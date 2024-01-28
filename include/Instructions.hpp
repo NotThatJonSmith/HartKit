@@ -158,7 +158,8 @@ inline void ex_op_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transac
         bool result_sign_bit = rd_value >> ((sizeof(OperandType)*8)-1);
         rd_value |= result_sign_bit ? ((XLEN_t)~0 << sizeof(OperandType)*8) : 0;
     }
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 4;
 }
 
@@ -175,8 +176,8 @@ template<typename XLEN_t, bool add_pc>
 inline void ex_upper_immediate_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __uint32_t imm = swizzle<__uint32_t, U_IMM>(encoding);
-    state->regs[rd] = rd != 0 ? imm : 0;
-    state->regs[rd] = rd != 0 ? ((add_pc ? state->pc : 0) + imm) : 0;
+    state->regs[rd] = (add_pc ? state->pc : 0) + imm;
+    state->regs[0] = 0;
     state->pc += 4;
 }
 
@@ -184,7 +185,8 @@ template<typename XLEN_t>
 inline void ex_jal(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, RD>(encoding);
     __int32_t imm = swizzle<__uint32_t, J_IMM>(encoding);
-    state->regs[rd] = rd != 0 ? (state->pc + 4) : 0;
+    state->regs[rd] = state->pc + 4;
+    state->regs[0] = 0;
     state->pc = state->pc + imm;
 }
 
@@ -196,7 +198,8 @@ inline void ex_jalr(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, I_IMM>(encoding);
     SXLEN_t imm_value = imm;
     imm_value &= ~(XLEN_t)1;
-    state->regs[rd] = rd != 0 ? (state->pc + 4) : 0;
+    state->regs[rd] = state->pc + 4;
+    state->regs[0] = 0;
     state->pc = state->regs[rs1] + imm_value;
 }
 
@@ -219,7 +222,8 @@ inline void ex_load_generic(__uint32_t encoding, HartState<XLEN_t> *state, Trans
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[rd] = rd != 0 ? read_value : 0;
+    state->regs[rd] = read_value;
+    state->regs[0] = 0;
     state->pc += 4;
 }
 
@@ -275,7 +279,8 @@ inline void ex_amo_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transa
         state->RaiseException(transaction.trapCause, mem_address);
         return;
     }
-    state->regs[rd] = rd != 0 ? mem_value : 0;
+    state->regs[rd] = mem_value;
+    state->regs[0] = 0;
     Operation operation;
     mem_value = operation(mem_value, state->regs[rs2]);
     mem->Write(mem_address, sizeof(MEM_TYPE_t), (char*)&mem_value);
@@ -322,7 +327,8 @@ inline void ex_csr_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transa
     bool write_required = !(sets_bits || clears_bits) || rs1;
     if (read_required) {
         XLEN_t csrValue = state->ReadCSR(csr);
-        state->regs[rd] = rd != 0 ? csrValue : 0;
+        state->regs[rd] = csrValue;
+        state->regs[0] = 0;
     }
     if constexpr (sets_bits) csrValue |= regVal;
     if constexpr (clears_bits) csrValue = ~csrValue & regVal;
@@ -364,7 +370,8 @@ template<typename XLEN_t>
 inline void ex_caddi4spn(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, CIW_RDX>(encoding)+8;
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Zero, 10, 7, 12, 11, 5, 5, 6, 6, 2>(encoding);
-    state->regs[rd] = rd != 0 ? (state->regs[2] + imm) : 0;
+    state->regs[rd] = state->regs[2] + imm;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -375,7 +382,6 @@ inline void print_caddi4spn(__uint32_t encoding, std::ostream* out) {
     *out << "(C.ADDI4SPN) addi " << RISCV::regName(rd) << ", " << RISCV::regName(2) << ", " << imm << std::endl;
 }
 
-// TODO endianness-agnostic impl; for now x86 and RV being both LE save us
 // TODO maybe combine cl and cs ?
 template<typename XLEN_t, typename MEM_TYPE_t>
 inline void ex_cl_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
@@ -396,7 +402,8 @@ inline void ex_cl_generic(__uint32_t encoding, HartState<XLEN_t> *state, Transac
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[rd] = rd != 0 ? mem_value : 0;
+    state->regs[rd] = mem_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -450,7 +457,8 @@ inline void ex_caddi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     __int32_t imm = (__int32_t)swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value + imm;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -492,7 +500,8 @@ template<typename XLEN_t>
 inline void ex_cli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2>(encoding);
-    state->regs[rd] = rd != 0 ? imm : 0;
+    state->regs[rd] = imm;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -507,7 +516,8 @@ template<typename XLEN_t>
 inline void ex_clui(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, CI_RD_RS1>(encoding);
     __uint32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 6, 2, 12>(encoding);
-    state->regs[rd] = rd != 0 ? (XLEN_t)imm : 0;
+    state->regs[rd] = imm;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -524,7 +534,8 @@ inline void ex_ca_format_op(__uint32_t encoding, HartState<XLEN_t> *state, Trans
     __uint32_t rs1 = swizzle<__uint32_t, CA_RDX_RS1X>(encoding)+8;
     __uint32_t rs2 = swizzle<__uint32_t, CA_RS2X>(encoding)+8;
     Operation operation;
-    state->regs[rd] = rd != 0 ? operation(state->regs[rs1], state->regs[rs2]) : 0;
+    state->regs[rd] = operation(state->regs[rs1], state->regs[rs2]);
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -540,7 +551,8 @@ template<typename XLEN_t>
 inline void ex_cj(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __int32_t imm = swizzle<__uint32_t, ExtendBits::Sign, 12, 12, 8, 8, 10, 9, 6, 6, 7, 7, 2, 2, 11, 11, 5, 3, 1>(encoding);
     __uint32_t rd = 0;
-    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->regs[rd] = state->pc + 2;
+    state->regs[0] = 0;
     state->pc += imm;
 }
 
@@ -589,7 +601,8 @@ inline void ex_candi(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     SXLEN_t imm_value_signed = imm;
     XLEN_t imm_value = *(XLEN_t*)&imm_value_signed;
     XLEN_t rd_value = rs1_value & imm_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -617,7 +630,8 @@ inline void ex_clwsp(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
         state->RaiseException(transaction.trapCause, read_address);
         return;
     }
-    state->regs[rd] = rd != 0 ? word : 0;
+    state->regs[rd] = word;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -671,7 +685,8 @@ inline void ex_cjalr(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
     imm_value &= ~(XLEN_t)1;
-    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->regs[rd] = state->pc + 2;
+    state->regs[0] = 0;
     state->pc = rs1_value + imm_value;
 }
 
@@ -692,7 +707,8 @@ inline void ex_cjr(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLE
     XLEN_t rs1_value = state->regs[rs1];
     SXLEN_t imm_value = imm;
     imm_value &= ~(XLEN_t)1;
-    state->regs[rd] = rd != 0 ? (state->pc + 2) : 0;
+    state->regs[rd] = state->pc + 2;
+    state->regs[0] = 0;
     state->pc = rs1_value + imm_value;
 }
 
@@ -712,7 +728,8 @@ inline void ex_cadd(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XL
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rs2_value = state->regs[rs2];
     XLEN_t rd_value = rs1_value + rs2_value;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -728,7 +745,8 @@ template<typename XLEN_t>
 inline void ex_cmv(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<XLEN_t> *mem) {
     __uint32_t rd = swizzle<__uint32_t, CR_RD_RS1>(encoding);
     __uint32_t rs2 = swizzle<__uint32_t, CR_RS2>(encoding);
-    state->regs[rd] = rd != 0 ? state->regs[rs2] : 0;
+    state->regs[rd] = state->regs[rs2];
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -748,7 +766,8 @@ inline void ex_cslli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     if constexpr (sizeof(XLEN_t) == 16) imm = imm == 0 ? 64 : imm;
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value << imm;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -768,7 +787,8 @@ inline void ex_csrli(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     if constexpr (sizeof(XLEN_t) == 16) imm = imm == 0 ? 64 : imm;
     XLEN_t rs1_value = state->regs[rs1];
     XLEN_t rd_value = rs1_value >> imm;
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -792,7 +812,8 @@ inline void ex_csrai(__uint32_t encoding, HartState<XLEN_t> *state, Transactor<X
     // Spec says: the original sign bit is copied into the vacated upper bits
     if (rs1_value & ((XLEN_t)1 << ((sizeof(XLEN_t)*8)-1)))
         rd_value |= (XLEN_t)((1 << imm_value)-1) << ((sizeof(XLEN_t)*8)-imm_value);
-    state->regs[rd] = rd != 0 ? rd_value : 0;
+    state->regs[rd] = rd_value;
+    state->regs[0] = 0;
     state->pc += 2;
 }
 
@@ -914,7 +935,7 @@ template<typename XLEN_t> Instruction<XLEN_t> inst_cslli { ex_cslli<XLEN_t>, pri
 template<typename XLEN_t> Instruction<XLEN_t> inst_csw { ex_cs_generic<XLEN_t, __uint32_t>, print_cs_generic<XLEN_t, __uint32_t, "(C.SW) sw"> };
 template<typename XLEN_t> Instruction<XLEN_t> inst_csd { ex_cs_generic<XLEN_t, __uint64_t>, print_cs_generic<XLEN_t, __uint64_t, "(C.SD) sd"> };
 template<typename XLEN_t> Instruction<XLEN_t> inst_csq { ex_cs_generic<XLEN_t, __uint128_t>, print_cs_generic<XLEN_t, __uint128_t, "(C.SQ) sq"> };
-template<typename XLEN_t> Instruction<XLEN_t> inst_clwsp { ex_clwsp<XLEN_t>, print_clwsp<XLEN_t> }; // TODO is there a cldsp?
+template<typename XLEN_t> Instruction<XLEN_t> inst_clwsp { ex_clwsp<XLEN_t>, print_clwsp<XLEN_t> };
 template<typename XLEN_t> Instruction<XLEN_t> inst_clw { ex_cl_generic<XLEN_t, __uint32_t>, print_cl_generic<XLEN_t, __uint32_t, "(C.LW) lw"> };
 template<typename XLEN_t> Instruction<XLEN_t> inst_cld { ex_cl_generic<XLEN_t, __uint64_t>, print_cl_generic<XLEN_t, __uint64_t, "(C.LD) ld"> };
 template<typename XLEN_t> Instruction<XLEN_t> inst_clq { ex_cl_generic<XLEN_t, __uint128_t>, print_cl_generic<XLEN_t, __uint128_t, "(C.LQ) lq"> };
