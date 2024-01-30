@@ -9,11 +9,11 @@
 template<typename XLEN_t, IOVerb verb>
 inline Translation<XLEN_t> PageFault(XLEN_t virt_addr) {
     if constexpr (verb == IOVerb::Read) {
-        return { virt_addr, 0, 0, RISCV::TrapCause::LOAD_PAGE_FAULT };
+        return { virt_addr, 0, 0, 0, RISCV::TrapCause::LOAD_PAGE_FAULT };
     } else if constexpr (verb == IOVerb::Write) {
-        return { virt_addr, 0, 0, RISCV::TrapCause::STORE_AMO_PAGE_FAULT };
+        return { virt_addr, 0, 0, 0, RISCV::TrapCause::STORE_AMO_PAGE_FAULT };
     } else {
-        return { virt_addr, 0, 0, RISCV::TrapCause::INSTRUCTION_PAGE_FAULT };
+        return { virt_addr, 0, 0, 0, RISCV::TrapCause::INSTRUCTION_PAGE_FAULT };
     }
 }
 
@@ -35,7 +35,7 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
 
     if (translationPrivilege == RISCV::PrivilegeMode::Machine ||
         currentPagingMode == RISCV::PagingMode::Bare) {
-        return { virt_addr, virt_addr, (XLEN_t)~0, RISCV::TrapCause::NONE };
+        return { virt_addr, virt_addr, (XLEN_t)0, (XLEN_t)~0, RISCV::TrapCause::NONE };
     } else if (currentPagingMode == RISCV::PagingMode::Sv32) {
         i = 1;
         vpn[1] = swizzle<XLEN_t, ExtendBits::Zero, 31, 22>(virt_addr);
@@ -171,8 +171,8 @@ static inline Translation<XLEN_t> TranslationAlgorithm(
         phys_addr = (ppn[3] << 39) | (ppn[2] << 30) | (ppn[1] << 21) | (ppn[0] << 12) | page_offset;
     }
     */ // TODO we're temporarily breaking Sv48 because of this shift overflow warning-as-error. There is a clean way...
-    // XLEN_t virt_page_start = virt_addr & ~(pagesize - 1);
+    XLEN_t virt_page_start = virt_addr & ~(pagesize - 1);
     XLEN_t virt_valid_through = virt_addr | (pagesize - 1);
     // TODO this is inefficient for superpages because it only uses the size of regular pages.
-    return { virt_addr, phys_addr, virt_valid_through, RISCV::TrapCause::NONE };
+    return { virt_addr, phys_addr, virt_page_start, virt_valid_through, RISCV::TrapCause::NONE };
 }
