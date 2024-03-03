@@ -1,5 +1,7 @@
 # HartKit
 
+Archived / Deprecated / Etc. All the useful code has been rolled up into GRIM.
+
 Useful components for developing simulators of RISC-V processors. Includes:
 
 * `HartState`, a concrete C++ class template that represents the state of a hart. The functional interface of `HartState` is designed to make instruction execution code concise and fast.
